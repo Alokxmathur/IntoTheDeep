@@ -2,8 +2,8 @@ package org.firstinspires.ftc.teamcode.robot;
 
 import android.util.Log;
 
+import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
-import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
@@ -188,13 +188,8 @@ public class Robot {
         this.operationThreadTertiary.queueUpOperation(operation);
     }
 
-    /**
-     * Returns the current heading of the robot in radians
-     *
-     * @return the heading in radians
-     */
-    public double getCurrentTheta() {
-        return 0;//AngleUnit.normalizeRadians(this.vslamCamera.getPoseEstimate().getHeading());
+    public OTOS getOTOS() {
+        return otos;
     }
 
     public boolean allOperationsCompleted() {
@@ -386,7 +381,6 @@ public class Robot {
 
     public void reset() {
         if (this.driveTrain != null) {
-            this.driveTrain.ensureWheelDirection();
             this.driveTrain.reset();
         }
         if (this.arm != null) {
@@ -395,10 +389,9 @@ public class Robot {
         initVision();
     }
 
-    public SparkFunOTOS.Pose2D getPose() {
-        return this.otos.getPose();
+    public Pose2d getPose() {
+        return driveTrain.getPose();
     }
-
     public DriveTrain getDriveTrain() {
         return this.driveTrain;
     }

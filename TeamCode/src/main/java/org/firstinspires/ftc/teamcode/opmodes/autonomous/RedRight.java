@@ -4,7 +4,7 @@ import org.firstinspires.ftc.teamcode.game.Alliance;
 import org.firstinspires.ftc.teamcode.game.Field;
 
 @com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="RedRight", group="Aliyah", preselectTeleOp="Aliyah: Driver Controlled")
-public class RedRight extends Autonomous {
+public class RedRight extends AutonomousV2 {
     @Override
     public void init() {
         super.init(telemetry, Alliance.Color.RED, Field.StartingPosition.Right);

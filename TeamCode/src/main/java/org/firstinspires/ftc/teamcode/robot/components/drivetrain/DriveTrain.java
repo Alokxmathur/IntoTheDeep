@@ -1,15 +1,18 @@
 package org.firstinspires.ftc.teamcode.robot.components.drivetrain;
 
-import com.acmerobotics.roadrunner.geometry.Pose2d;
-import com.acmerobotics.roadrunner.trajectory.Trajectory;
+
+import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.Rotation2d;
+import com.acmerobotics.roadrunner.TimeTurn;
+import com.acmerobotics.roadrunner.Trajectory;
+import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.Range;
 import com.qualcomm.robotcore.util.RobotLog;
 
+import org.firstinspires.ftc.teamcode.MecanumDrive;
 import org.firstinspires.ftc.teamcode.game.Match;
-import org.firstinspires.ftc.teamcode.roadrunner.drive.SilverTitansDriveConstants;
-import org.firstinspires.ftc.teamcode.roadrunner.drive.SilverTitansMecanumDrive;
 import org.firstinspires.ftc.teamcode.robot.operations.BearingOperation;
 import org.firstinspires.ftc.teamcode.robot.operations.DriveForDistanceOperation;
 import org.firstinspires.ftc.teamcode.robot.operations.DriveToPositionOperation;
@@ -21,6 +24,7 @@ import org.firstinspires.ftc.teamcode.robot.operations.StrafeRightForDistanceOpe
 import org.firstinspires.ftc.teamcode.robot.operations.StrafeRightToAprilTagOperation;
 import org.firstinspires.ftc.teamcode.robot.operations.TurnAntiClockwiseOperation;
 import org.firstinspires.ftc.teamcode.robot.operations.TurnClockwiseOperation;
+import org.opencv.core.Mat;
 
 import java.util.Date;
 import java.util.Locale;
@@ -29,14 +33,18 @@ import java.util.Locale;
  * Created by Silver Titans on 10/26/17.
  */
 
-public class DriveTrain extends SilverTitansMecanumDrive {
+public class DriveTrain extends SparkFunOTOSDrive {
     public static final int WITHIN_RANGE = 30;
-    public static final double     P_TURN_COEFFICIENT            = 1;     // Larger is more responsive, but also less stable
     public static final double P_DRIVE_COEFFICIENT = 0.0125 * Math.PI;     // Larger is more responsive, but also less stable
 
 
     public DriveTrain(HardwareMap hardwareMap) {
-        super(hardwareMap);
+        super(hardwareMap, new Pose2d(0, 0, 0));
+    }
+
+    public Pose2d getPose() {
+        super.updatePoseEstimate();
+        return super.pose;
     }
 
     /** Set power of left front motor
@@ -58,88 +66,25 @@ public class DriveTrain extends SilverTitansMecanumDrive {
         super.rightFront.setPower(power);
     }
 
-    /** Set power of left rear motor
+    /** Set power of left Back motor
      *
      * @param power - the power to set
      *
      */
-    public void setLeftRearPower(double power) {
-        //super.leftRear.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        super.leftRear.setPower(power);
+    public void setLeftBackPower(double power) {
+        //super.leftBack.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        super.leftBack.setPower(power);
     }
 
     /**
-     * Set power of right rear motor
+     * Set power of right Back motor
      * @param power - the power to set
      */
-    public void setRightRearPower(double power) {
-        //super.rightRear.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        super.rightRear.setPower(power);
+    public void setRightBackPower(double power) {
+        //super.rightBack.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        super.rightBack.setPower(power);
     }
 
-    public void handleOperation(FollowTrajectory trajectoryOperation) {
-        Pose2d currentPose = getPoseEstimate();
-        Match.log("Starting " + trajectoryOperation.getTitle() + ": "  + trajectoryOperation.getTrajectory().start() + "->" + trajectoryOperation.getTrajectory().end()
-                + " at " + currentPose);
-        super.followTrajectoryAsync(trajectoryOperation.getTrajectory());
-    }
-
-    public void handleOperation (DriveToPositionOperation operation) {
-        try {
-            Pose2d currentPose = getPoseEstimate();
-            Date start = new Date();
-            Thread createTrajectoryThread = new Thread(() -> {
-                Trajectory trajectory = accurateTrajectoryBuilder(currentPose)
-                        .splineToLinearHeading(operation.getDesiredPose(), operation.getDesiredPose().getHeading())
-                        .build();
-                Match.log("Starting " + operation.getTitle() + ": " + trajectory.start() + "->" + trajectory.end()
-                        + " at " + currentPose + ", build took " + (new Date().getTime() - start.getTime()) + " mSecs");
-                //set trajectory in operation
-                operation.setTrajectory(trajectory);
-                //start following trajectory
-                super.followTrajectoryAsync(trajectory);
-                //mark that trajectory has been started
-                operation.setTrajectoryStarted(true);
-            });
-            createTrajectoryThread.start();
-        }
-        catch (Throwable e) {
-            Match.log("Error starting drive to position");
-            RobotLog.logStackTrace(e);
-            operation.setAborted(true);
-        }
-    }
-
-    public void handleOperation (BearingOperation operation) {
-        try {
-            Pose2d currentPose = getPoseEstimate();
-            Pose2d desiredPose =
-                    currentPose.plus(
-                            new Pose2d(.05,
-                                    .05,
-                                    operation.getDesiredBearing() -currentPose.getHeading()));
-            Date start = new Date();
-            Thread createTrajectoryThread = new Thread(() -> {
-                Trajectory trajectory = trajectoryBuilder(currentPose)
-                        .splineToLinearHeading(desiredPose, 0)
-                        .build();
-                Match.log("Starting " + operation.getTitle() + ": " + trajectory.start() + "->" + trajectory.end()
-                        + " at " + currentPose + ", build took " + (new Date().getTime() - start.getTime()) + " mSecs");
-                //set trajectory in operation
-                operation.setTrajectory(trajectory);
-                //start following trajectory
-                super.followTrajectoryAsync(trajectory);
-                //mark that trajectory has been started
-                operation.setTrajectoryStarted(true);
-            });
-            createTrajectoryThread.start();
-        }
-        catch (Throwable e) {
-            Match.log("Error starting drive to position");
-            RobotLog.logStackTrace(e);
-            operation.setAborted(true);
-        }
-    }
     /**
      * Handle operation to drive for the specified distance in the direction the robot is facing
      * @param operation
@@ -154,18 +99,18 @@ public class DriveTrain extends SilverTitansMecanumDrive {
         int encoderChange = SilverTitansDriveConstants.mmToEncoderTicks(operation.getDistance());
         this.leftFront.setTargetPosition(leftFront.getCurrentPosition() + encoderChange);
         this.rightFront.setTargetPosition(rightFront.getCurrentPosition() + encoderChange);
-        this.leftRear.setTargetPosition(leftRear.getCurrentPosition() + encoderChange);
-        this.rightRear.setTargetPosition(rightRear.getCurrentPosition() + encoderChange);
+        this.leftBack.setTargetPosition(leftBack.getCurrentPosition() + encoderChange);
+        this.rightBack.setTargetPosition(rightBack.getCurrentPosition() + encoderChange);
 
         this.leftFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         this.rightFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        this.leftRear.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        this.rightRear.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        this.leftBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        this.rightBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         this.leftFront.setPower(operation.getSpeed());
         this.rightFront.setPower(operation.getSpeed());
-        this.leftRear.setPower(operation.getSpeed());
-        this.rightRear.setPower(operation.getSpeed());
+        this.leftBack.setPower(operation.getSpeed());
+        this.rightBack.setPower(operation.getSpeed());
     }
 
     /**
@@ -178,8 +123,8 @@ public class DriveTrain extends SilverTitansMecanumDrive {
 
         this.leftFront.setPower(operation.getLeftSpeed());
         this.rightFront.setPower(operation.getRightSpeed());
-        this.leftRear.setPower(operation.getLeftSpeed());
-        this.rightRear.setPower(operation.getRightSpeed());
+        this.leftBack.setPower(operation.getLeftSpeed());
+        this.rightBack.setPower(operation.getRightSpeed());
     }
     /**
      * Handle operation to turn clockwise for the specified distance
@@ -194,19 +139,19 @@ public class DriveTrain extends SilverTitansMecanumDrive {
 
         int encoderChange = SilverTitansDriveConstants.mmToEncoderTicks(operation.getDistance());
         this.rightFront.setTargetPosition(rightFront.getCurrentPosition() - encoderChange);
-        this.rightRear.setTargetPosition(rightRear.getCurrentPosition() - encoderChange);
+        this.rightBack.setTargetPosition(rightBack.getCurrentPosition() - encoderChange);
         this.leftFront.setTargetPosition(leftFront.getCurrentPosition() + encoderChange);
-        this.leftRear.setTargetPosition(leftRear.getCurrentPosition() + encoderChange);
+        this.leftBack.setTargetPosition(leftBack.getCurrentPosition() + encoderChange);
 
         this.rightFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        this.rightRear.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        this.rightBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         this.leftFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        this.leftRear.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        this.leftBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         this.rightFront.setPower(operation.getSpeed());
-        this.rightRear.setPower(operation.getSpeed());
+        this.rightBack.setPower(operation.getSpeed());
         this.leftFront.setPower(operation.getSpeed());
-        this.leftRear.setPower(operation.getSpeed());
+        this.leftBack.setPower(operation.getSpeed());
     }
 
 
@@ -223,19 +168,19 @@ public class DriveTrain extends SilverTitansMecanumDrive {
 
         int encoderChange = SilverTitansDriveConstants.mmToEncoderTicks(operation.getDistance());
         this.rightFront.setTargetPosition(rightFront.getCurrentPosition() + encoderChange);
-        this.rightRear.setTargetPosition(rightRear.getCurrentPosition() + encoderChange);
+        this.rightBack.setTargetPosition(rightBack.getCurrentPosition() + encoderChange);
         this.leftFront.setTargetPosition(leftFront.getCurrentPosition() - encoderChange);
-        this.leftRear.setTargetPosition(leftRear.getCurrentPosition() - encoderChange);
+        this.leftBack.setTargetPosition(leftBack.getCurrentPosition() - encoderChange);
 
         this.rightFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        this.rightRear.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        this.rightBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         this.leftFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        this.leftRear.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        this.leftBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         this.rightFront.setPower(operation.getSpeed());
-        this.rightRear.setPower(operation.getSpeed());
+        this.rightBack.setPower(operation.getSpeed());
         this.leftFront.setPower(operation.getSpeed());
-        this.leftRear.setPower(operation.getSpeed());
+        this.leftBack.setPower(operation.getSpeed());
     }
 
     /**
@@ -245,7 +190,7 @@ public class DriveTrain extends SilverTitansMecanumDrive {
      * We do this by computing how much each wheel must be rotated to travel the specified distance
      * and then commanding the motors to reach the new desired encoder values
      *
-     * We make the left front and right rear motors move forward while making the right front and left rear
+     * We make the left front and right Back motors move forward while making the right front and left Back
      * motors propel backwards
      *
      */
@@ -254,18 +199,18 @@ public class DriveTrain extends SilverTitansMecanumDrive {
         int encoderChange = SilverTitansDriveConstants.mmToEncoderTicks(operation.getDistance() * 1.05);
         this.leftFront.setTargetPosition(leftFront.getCurrentPosition() - encoderChange);
         this.rightFront.setTargetPosition(rightFront.getCurrentPosition() + encoderChange);
-        this.leftRear.setTargetPosition(leftRear.getCurrentPosition() + encoderChange);
-        this.rightRear.setTargetPosition(rightRear.getCurrentPosition() - encoderChange);
+        this.leftBack.setTargetPosition(leftBack.getCurrentPosition() + encoderChange);
+        this.rightBack.setTargetPosition(rightBack.getCurrentPosition() - encoderChange);
 
         this.leftFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         this.rightFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        this.leftRear.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        this.rightRear.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        this.leftBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        this.rightBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         this.leftFront.setPower(operation.getSpeed());
         this.rightFront.setPower(operation.getSpeed());
-        this.leftRear.setPower(operation.getSpeed());
-        this.rightRear.setPower(operation.getSpeed());
+        this.leftBack.setPower(operation.getSpeed());
+        this.rightBack.setPower(operation.getSpeed());
     }
 
     /**
@@ -275,7 +220,7 @@ public class DriveTrain extends SilverTitansMecanumDrive {
      * We do this by computing how much each wheel must be rotated to travel the specified distance
      * and then commanding the motors to reach the new desired encoder values
      *
-     * We make the left front and right rear motors move forward while making the right front and left rear
+     * We make the left front and right Back motors move forward while making the right front and left Back
      * motors propel backwards
      *
      */
@@ -284,13 +229,13 @@ public class DriveTrain extends SilverTitansMecanumDrive {
         int encoderChange = SilverTitansDriveConstants.mmToEncoderTicks(operation.getDistance() * 1.05);
         this.leftFront.setTargetPosition(leftFront.getCurrentPosition() - encoderChange);
         this.rightFront.setTargetPosition(rightFront.getCurrentPosition() + encoderChange);
-        this.leftRear.setTargetPosition(leftRear.getCurrentPosition() + encoderChange);
-        this.rightRear.setTargetPosition(rightRear.getCurrentPosition() - encoderChange);
+        this.leftBack.setTargetPosition(leftBack.getCurrentPosition() + encoderChange);
+        this.rightBack.setTargetPosition(rightBack.getCurrentPosition() - encoderChange);
 
         this.leftFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         this.rightFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        this.leftRear.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        this.rightRear.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        this.leftBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        this.rightBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
 
     public void handleOperation(StrafeRightForDistanceOperation operation) {
@@ -298,18 +243,18 @@ public class DriveTrain extends SilverTitansMecanumDrive {
         int encoderChange = SilverTitansDriveConstants.mmToEncoderTicks(operation.getDistance() * 1.05);
         this.leftFront.setTargetPosition(leftFront.getCurrentPosition() + encoderChange);
         this.rightFront.setTargetPosition(rightFront.getCurrentPosition() - encoderChange);
-        this.leftRear.setTargetPosition(leftRear.getCurrentPosition() - encoderChange);
-        this.rightRear.setTargetPosition(rightRear.getCurrentPosition() + encoderChange);
+        this.leftBack.setTargetPosition(leftBack.getCurrentPosition() - encoderChange);
+        this.rightBack.setTargetPosition(rightBack.getCurrentPosition() + encoderChange);
 
         this.leftFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         this.rightFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        this.leftRear.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        this.rightRear.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        this.leftBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        this.rightBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         this.leftFront.setPower(operation.getSpeed());
         this.rightFront.setPower(operation.getSpeed());
-        this.leftRear.setPower(operation.getSpeed());
-        this.rightRear.setPower(operation.getSpeed());
+        this.leftBack.setPower(operation.getSpeed());
+        this.rightBack.setPower(operation.getSpeed());
     }
 
 
@@ -331,11 +276,11 @@ public class DriveTrain extends SilverTitansMecanumDrive {
         return true;
     }
     private boolean withinRange()  {
-        return withinRange(leftFront, rightFront, leftRear, rightRear);
+        return withinRange(leftFront, rightFront, leftBack, rightBack);
     }
 
     public boolean allWithinRange()  {
-        if (allWithinRange(leftFront, rightFront, leftRear, rightRear)) {
+        if (allWithinRange(leftFront, rightFront, leftBack, rightBack)) {
             stop();
             return true;
         }
@@ -361,8 +306,8 @@ public class DriveTrain extends SilverTitansMecanumDrive {
         //Stop our motors
         leftFront.setPower(0);
         rightFront.setPower(0);
-        leftRear.setPower(0);
-        rightRear.setPower(0);
+        leftBack.setPower(0);
+        rightBack.setPower(0);
         reset();
     }
 
@@ -370,15 +315,16 @@ public class DriveTrain extends SilverTitansMecanumDrive {
         resetEncoders();
         this.leftFront.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         this.rightFront.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        this.leftRear.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        this.rightRear.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        this.leftBack.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        this.rightBack.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        ensureMotorDirections();
     }
 
     private void resetEncoders() {
         this.leftFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         this.rightFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        this.leftRear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        this.rightRear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        this.leftBack.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        this.rightBack.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         Match.log("Reset drivetrain encoders");
     }
 
@@ -387,8 +333,8 @@ public class DriveTrain extends SilverTitansMecanumDrive {
                 "LF:%.2f(%d>%d),RF:%.2f(%d>%d),LR:%.2f(%d>%d),RR:%.2f(%d>%d)",
             this.leftFront.getPower(), this.leftFront.getCurrentPosition(), this.leftFront.getTargetPosition(),
             this.rightFront.getPower(), this.rightFront.getCurrentPosition(), this.rightFront.getTargetPosition(),
-            this.leftRear.getPower(), this.leftRear.getCurrentPosition(), this.leftRear.getTargetPosition(),
-            this.rightRear.getPower(), this.rightRear.getCurrentPosition(), this.rightRear.getTargetPosition());
+            this.leftBack.getPower(), this.leftBack.getCurrentPosition(), this.leftBack.getTargetPosition(),
+            this.rightBack.getPower(), this.rightBack.getCurrentPosition(), this.rightBack.getTargetPosition());
     }
 
     /**
@@ -432,8 +378,8 @@ public class DriveTrain extends SilverTitansMecanumDrive {
 
         setLeftFrontPower(v1);
         setRightFrontPower(v2);
-        setLeftRearPower(v3);
-        setRightRearPower(v4);
+        setLeftBackPower(v3);
+        setRightBackPower(v4);
 
         //Match.log(String.format(Locale.getDefault(), "Powers: LF:%.2f,RF:%.2f,LR:%.2f,RR:%.2f", v1, v2, v3, v4));
     }

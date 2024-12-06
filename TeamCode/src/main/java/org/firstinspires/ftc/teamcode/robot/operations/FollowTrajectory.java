@@ -1,9 +1,10 @@
 package org.firstinspires.ftc.teamcode.robot.operations;
 
-import com.acmerobotics.roadrunner.geometry.Pose2d;
-import com.acmerobotics.roadrunner.trajectory.Trajectory;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.Pose2d;
+import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
 
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.game.Match;
 
 import java.util.Locale;
@@ -13,65 +14,43 @@ import java.util.Locale;
  */
 
 public class FollowTrajectory extends DriveTrainOperation {
-    public static final int DEFAULT_CORRECTION_COUNT = 1;
-
-    protected Trajectory trajectory;
-
-    public FollowTrajectory(Trajectory trajectory, String title) {
+    protected Action action;
+    public FollowTrajectory(Action action, String title) {
         super();
-        this.trajectory = trajectory;
+        this.action = action;
         this.title = title;
-    }
-    public void setTrajectory(Trajectory trajectory) {
-        this.trajectory = trajectory;
     }
 
     public String toString() {
-        return String.format(Locale.getDefault(), "Trajectory: %s->%s --%s",
-                this.trajectory.start().toString(),
-                this.trajectory.end().toString(),
+        return String.format(Locale.getDefault(), "FollowTrajectory: %s --%s",
+                action.toString(),
                 this.title);
     }
 
     public boolean isComplete() {
-        driveTrain.update();
-        Pose2d currentPose = driveTrain.getPoseEstimate();
-        String error = getError(currentPose, trajectory);
-        Match.getInstance().setTrajectoryError(error);
-        boolean busy = driveTrain.isBusy();
-        if (!busy) {
-            Match.log(String.format("Finished trajectory %s with error %s, at %s",
+        boolean shouldRunAgain = action.run(new TelemetryPacket());
+        Pose2d currentPose = Match.getInstance().getRobot().getPose();
+        if (shouldRunAgain) {
+            Match.log(String.format("Continuing trajectory %s, at %.2f,%.2f@%.2f",
                     this.title,
-                    error,
-                    currentPose.toString()));
-            return true;
+                    currentPose.position.x,
+                    currentPose.position.y,
+                    Math.toDegrees(currentPose.heading.toDouble())));
+            return false;
         }
         else {
-            //Match.log(error);
-            return false;
+            Match.log(String.format("Finished trajectory %s, at %.2f,%.2f@%.2f",
+                    this.title,
+                    currentPose.position.x,
+                    currentPose.position.y,
+                    Math.toDegrees(currentPose.heading.toDouble())));
+            return true;
         }
     }
 
     @Override
     public void startOperation() {
-        this.driveTrain.handleOperation(this);
-    }
 
-    public static String getError(Pose2d currentPose, Trajectory trajectory) {
-        return String.format(Locale.getDefault(), "%.2f, %.2f, %.2f",
-                        trajectory.end().getX()-currentPose.getX(),
-                        trajectory.end().getY()-currentPose.getY(),
-                        Math.toDegrees(
-                                AngleUnit.normalizeRadians(
-                                        trajectory.end().getHeading()
-                                        - currentPose.getHeading()
-                                )
-                        )
-        );
-    }
-
-    public Trajectory getTrajectory() {
-        return trajectory;
     }
 }
 

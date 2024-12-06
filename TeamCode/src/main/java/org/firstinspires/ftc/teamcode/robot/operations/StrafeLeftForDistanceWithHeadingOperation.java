@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.robot.operations;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.game.Field;
+import org.firstinspires.ftc.teamcode.game.Match;
 import org.firstinspires.ftc.teamcode.robot.components.drivetrain.DriveTrain;
 
 import java.util.Date;
@@ -46,7 +47,8 @@ public class StrafeLeftForDistanceWithHeadingOperation extends DriveTrainOperati
         }
         else {
             // adjust relative SPEED based on desiredHeading error.
-            double bearingError = AngleUnit.normalizeDegrees(Math.toDegrees(heading) - Math.toDegrees(driveTrain.getExternalHeading()));
+            double bearingError = AngleUnit.normalizeDegrees(Math.toDegrees(heading)
+                    - (Math.toDegrees(Match.getInstance().getRobot().getPose().heading.toDouble())));
             double steer = DriveTrain.getSteer(bearingError, DriveTrain.P_DRIVE_COEFFICIENT);
 
             // if driving in reverse, the motor correction also needs to be reversed
@@ -64,9 +66,9 @@ public class StrafeLeftForDistanceWithHeadingOperation extends DriveTrainOperati
             }
 
             driveTrain.setLeftFrontPower(leftSpeed);
-            driveTrain.setLeftRearPower(leftSpeed);
+            driveTrain.setLeftBackPower(leftSpeed);
             driveTrain.setRightFrontPower(rightSpeed);
-            driveTrain.setRightRearPower(rightSpeed);
+            driveTrain.setRightBackPower(rightSpeed);
             //Match.log(String.format(Locale.getDefault(), "Left speed: %.2f, right: %.2f", leftSpeed, rightSpeed));
 
             return false;

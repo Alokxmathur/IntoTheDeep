@@ -1,32 +1,23 @@
 package org.firstinspires.ftc.teamcode.robot.operations;
 
-import com.acmerobotics.roadrunner.geometry.Pose2d;
-import com.acmerobotics.roadrunner.trajectory.Trajectory;
+import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
+
+import org.firstinspires.ftc.teamcode.game.Match;
+import org.firstinspires.ftc.teamcode.robot.Robot;
 
 import java.util.Locale;
 
 /**
  * Operation to reach a specified pose.
  *
- * We accomplish this by using the FollowTrajectory class and setting its trajectory on the
+ * We accomplish this by using the FollowTrajectory class and setting its action on the
  * fly when the operation is started.
  */
 
 public class DriveToPositionOperation extends FollowTrajectory {
-    private Pose2d desiredPose;
-    private boolean trajectoryStarted;
-
-
-    public boolean isTrajectoryStarted() {
-        return trajectoryStarted;
-    }
-
-    public void setTrajectory (Trajectory trajectory) {
-        this.trajectory = trajectory;
-    }
-    public void setTrajectoryStarted(boolean trajectoryStarted) {
-        this.trajectoryStarted = trajectoryStarted;
-    }
+    protected Pose2d desiredPose;
 
     /**
      * Get the robot to the desired pose
@@ -49,17 +40,13 @@ public class DriveToPositionOperation extends FollowTrajectory {
                 this.title);
     }
 
-    public boolean isComplete() {
-        //wait for the trajectory to be created
-        if (!trajectoryStarted) {
-            return false;
-        }
-        return super.isComplete();
-    }
-
     @Override
     public void startOperation() {
-        driveTrain.handleOperation(this);
+        Robot robot = Match.getInstance().getRobot();
+        Pose2d currentPose = robot.getPose();
+        action  =
+                robot.getDriveTrain().actionBuilder(currentPose)
+                        .splineToLinearHeading(desiredPose, 0).build();
     }
 
     @Override

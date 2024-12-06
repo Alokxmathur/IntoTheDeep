@@ -8,27 +8,21 @@ import java.util.List;
 import java.util.Locale;
 
 public class StrafeRightToAprilTagOperation extends DriveTrainOperation{
-    int desiredAprilTag;
-
-    public StrafeRightToAprilTagOperation(int desiredAprilTag, String title) {
+    public StrafeRightToAprilTagOperation(String title) {
         super();
-        this.desiredAprilTag = desiredAprilTag;
         this.title = title;
     }
 
     public String toString() {
-        return String.format(Locale.getDefault(), "StrafeToAprilTag: Tag:%d --%s",
-                this.desiredAprilTag,
+        return String.format(Locale.getDefault(), "StrafeToAprilTag: --%s",
                 this.title);
     }
 
     public boolean isComplete() {
         List<AprilTagDetection> aprilTagsSeen = Match.getInstance().getRobot().getVisionPortal().getAprilTags();
-        for (AprilTagDetection aprilTagDetection : aprilTagsSeen) {
-            if (aprilTagDetection.id == desiredAprilTag) {
-                driveTrain.stop();
-                return true;
-            }
+        if (aprilTagsSeen.size() > 0) {
+             driveTrain.stop();
+            return true;
         }
         return false;
     }

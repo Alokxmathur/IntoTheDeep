@@ -16,9 +16,6 @@ import org.firstinspires.ftc.teamcode.robot.operations.ArmOperation;
 import java.util.Locale;
 
 public class Arm {
-    public static final int CORE_HEX_MOTOR_COUNT_PER_REV = 288;
-    public static final int INOUT_GEAR_RATIO = 3;
-
     DcMotorEx slide, shoulder;
 
     NormalizedColorSensor colorSensor;

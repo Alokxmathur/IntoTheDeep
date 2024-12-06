@@ -4,8 +4,8 @@ import org.firstinspires.ftc.teamcode.robot.RobotConfig;
 
 public class StrafeLeftToAprilTagOperation extends StrafeRightToAprilTagOperation {
 
-    public StrafeLeftToAprilTagOperation(int desiredAprilTag, String title) {
-        super(desiredAprilTag, title);
+    public StrafeLeftToAprilTagOperation(String title) {
+        super(title);
     }
 
     @Override

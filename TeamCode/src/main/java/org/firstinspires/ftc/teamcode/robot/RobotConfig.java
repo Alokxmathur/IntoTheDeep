@@ -27,11 +27,12 @@ public class RobotConfig {
 
 
 
-   public static final double CAUTIOUS_SPEED = 0.6;
-   public static final double APRIL_TAG_SPEED = 0.3;
+   public static final double CAUTIOUS_SPEED = 0.9;
+   public static final double APRIL_TAG_SPEED = 0.5;
+    public static final String OTOS = "otos";
 
 
-   //Robot center from back is five and half inches away
+    //Robot center from back is five and half inches away
    public static double ROBOT_CENTER_FROM_BACK = 8 * Field.MM_PER_INCH;
 
    //Robot center from front is four and a half inches
@@ -46,7 +47,7 @@ public class RobotConfig {
    public static final double MAX_SLIDE_POWER = 1;
 
    public static final int ACCEPTABLE_SHOULDER_ERROR = 10;
-   public static final double MAX_SHOULDER_POWER = 0.5;
+   public static final double MAX_SHOULDER_POWER = 1.0;
 
    public static final int ACCEPTABLE_WRIST_ERROR = 5;
    public static final double MAX_WRIST_POWER = 0.5;

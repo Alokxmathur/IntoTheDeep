@@ -3,7 +3,7 @@ package org.firstinspires.ftc.teamcode.game;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
-import com.acmerobotics.roadrunner.geometry.Pose2d;
+import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
 import com.qualcomm.robotcore.util.RobotLog;
@@ -13,6 +13,7 @@ import org.firstinspires.ftc.teamcode.robot.Robot;
 import org.firstinspires.ftc.teamcode.robot.RobotConfig;
 
 import java.util.Date;
+import java.util.Locale;
 
 /**
  * Created by Silver Titans on 9/19/17. This is Cameron's comment
@@ -105,11 +106,13 @@ public class Match {
     public void updateTelemetry(Telemetry telemetry, String status) {
 
         if (robot != null && field != null) {
-            SparkFunOTOS.Pose2D pose2D = robot.getPose();
+            Pose2d pose2d = robot.getPose();
             // Send telemetry message to signify robot context;
             telemetry.addData("State", status);
             telemetry.addData("Delayed Start", getDelayedStart() + "milliseconds");
-            telemetry.addData("Position", "" + pose2D.x + "," + pose2D.y + "@" + pose2D.h);
+            telemetry.addData("Position", String.format(Locale.getDefault(),
+                    "%.2f,%.2f@%.2f",
+                    pose2d.position.x, pose2d.position.y, Math.toDegrees(pose2d.heading.toDouble())));
             telemetry.addData("Drive", robot.getDriveTrain().getStatus());
             telemetry.addData("Arm", robot.getArmStatus());
             telemetry.addData("Intake", robot.getIntakeStatus());
@@ -144,14 +147,14 @@ public class Match {
         TelemetryPacket packet = new TelemetryPacket();
         Canvas field = packet.fieldOverlay();
 
-        SparkFunOTOS.Pose2D pose2d = robot.getPose();
+        Pose2d pose2d = robot.getPose();
         if (pose2d == null) {
             Match.log("Could not get pose");
             return;
         }
-        field.strokeCircle(pose2d.x, pose2d.y, .2);
+        field.strokeCircle(pose2d.position.x, pose2d.position.y, .2);
 
-        double rotation = pose2d.h;
+        double rotation = pose2d.heading.toDouble();
         double sin = Math.sin(rotation);
         double cos = Math.cos(rotation);
 
@@ -166,20 +169,20 @@ public class Match {
         double y4 = -y2;
 
         //add the robot's X coordinate to all X
-        x1 += pose2d.x;
-        x2 += pose2d.x;
-        x3 += pose2d.x;
-        x4 += pose2d.x;
+        x1 += pose2d.position.x;
+        x2 += pose2d.position.x;
+        x3 += pose2d.position.x;
+        x4 += pose2d.position.x;
         //add the robot's Y coordinate to all Y
-        y1 += pose2d.y;
-        y2 += pose2d.y;
-        y3 += pose2d.y;
-        y4 += pose2d.y;
+        y1 += pose2d.position.y;
+        y2 += pose2d.position.y;
+        y3 += pose2d.position.y;
+        y4 += pose2d.position.y;
 
 
         //the point in front of the robot to create the triangle to show direction
-        double px = (pose2d.x + (RobotConfig.ROBOT_LENGTH/2 + 100)*cos/Field.MM_PER_INCH);
-        double py = (pose2d.y + (RobotConfig.ROBOT_LENGTH/2 + 100)*sin/Field.MM_PER_INCH);
+        double px = (pose2d.position.x + (RobotConfig.ROBOT_LENGTH/2 + 100)*cos/Field.MM_PER_INCH);
+        double py = (pose2d.position.y + (RobotConfig.ROBOT_LENGTH/2 + 100)*sin/Field.MM_PER_INCH);
 
 
         //draw our rectangular robot
@@ -194,7 +197,8 @@ public class Match {
 
         packet.put("State", status);
         packet.put("Delayed Start", getDelayedStart() + "milliseconds");
-        packet.put("Position", robot.getPose());
+        packet.put("Position", String.format(Locale.getDefault(), "%.2f,%.2f@%.2f", pose2d.position.x,
+                pose2d.position.y, pose2d.heading.toDouble()));
         packet.put("Drive", robot.getDriveTrain().getStatus());
         packet.put("LED", robot.getLEDStatus().toString());
         packet.put("TrajectoryErr", getTrajectoryError());

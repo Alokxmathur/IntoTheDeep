@@ -1,26 +1,14 @@
 package org.firstinspires.ftc.teamcode.opmodes.autonomous;
 
-import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
-
-import org.firstinspires.ftc.teamcode.game.Alliance;
 import org.firstinspires.ftc.teamcode.game.Field;
-import org.firstinspires.ftc.teamcode.game.Match;
 import org.firstinspires.ftc.teamcode.robot.RobotConfig;
 import org.firstinspires.ftc.teamcode.robot.operations.ArmOperation;
 import org.firstinspires.ftc.teamcode.robot.operations.BearingOperation;
 import org.firstinspires.ftc.teamcode.robot.operations.DriveForDistanceOperation;
-import org.firstinspires.ftc.teamcode.robot.operations.DriveInDirectionOperation;
-import org.firstinspires.ftc.teamcode.robot.operations.DriveToAprilTag;
-import org.firstinspires.ftc.teamcode.robot.operations.IntakeOperation;
-import org.firstinspires.ftc.teamcode.robot.operations.LedOperation;
 import org.firstinspires.ftc.teamcode.robot.operations.State;
 import org.firstinspires.ftc.teamcode.robot.operations.StrafeLeftForDistanceOperation;
-import org.firstinspires.ftc.teamcode.robot.operations.StrafeLeftToAprilTagOperation;
-import org.firstinspires.ftc.teamcode.robot.operations.StrafeRightForDistanceOperation;
-import org.firstinspires.ftc.teamcode.robot.operations.StrafeRightToAprilTagOperation;
-import org.firstinspires.ftc.teamcode.robot.operations.WaitOperation;
 
-public abstract class Autonomous extends AutonomousHelper {
+public abstract class AutonomousV1 extends AutonomousHelper {
     double DISTANCE_TO_SUBMERSIBLE = 30.0 * Field.MM_PER_INCH;
     @Override
     public void start() {
