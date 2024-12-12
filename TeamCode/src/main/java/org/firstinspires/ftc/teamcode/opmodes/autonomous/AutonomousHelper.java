@@ -22,7 +22,7 @@ public abstract class AutonomousHelper extends OpMode {
     protected Robot robot;
     protected Field field;
 
-    protected WaitOperation delayedStart = null;
+    protected static WaitOperation delayedStart = null;
     ArrayList<State> states = new ArrayList<>();
 
     Date initStartTime;
@@ -52,9 +52,9 @@ public abstract class AutonomousHelper extends OpMode {
             this.robot.init(hardwareMap, telemetry, match);
 
             //set the starting delay to be 0 milliseconds and add this operation in the first state
-            this.delayedStart = new WaitOperation(0, "Delay start");
+            delayedStart = new WaitOperation(0, "Delay start");
             State state = new State("Initial wait");
-            state.addPrimaryOperation(this.delayedStart);
+            state.addPrimaryOperation(delayedStart);
             states.add(state);
 
             telemetry.update();
@@ -124,6 +124,10 @@ public abstract class AutonomousHelper extends OpMode {
         }
         robot.handleArm(gamepad1, gamepad2);
         robot.handleDriveTrain(gamepad1);
+    }
+
+    public static long getStartDelay() {
+        return delayedStart.getTime();
     }
 
     @Override

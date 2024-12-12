@@ -42,8 +42,7 @@ public class Arm {
 
         this.claw = hardwareMap.get(Servo.class, RobotConfig.CLAW);
 
-        colorSensor = hardwareMap.get(NormalizedColorSensor.class, RobotConfig.COLOR_SENSOR);
-        distanceSensor = hardwareMap.get(DistanceSensor.class, RobotConfig.COLOR_SENSOR);
+        distanceSensor = hardwareMap.get(DistanceSensor.class, RobotConfig.DISTANCE_SENSOR);
 
         ensureMotorDirections();
         assumeInitialPosition();
@@ -174,12 +173,11 @@ public class Arm {
      * @return
      */
     public String getStatus() {
-        NormalizedRGBA colors = colorSensor.getNormalizedColors();
         return String.format(Locale.getDefault(),
-                "Slide:%d->%d@%.2f, Shoulder:%d->%d@%.2f, Claw:%.2f, Color:%.3f,%.3f,%.3f, Distance:%.2f",
+                "Slide:%d->%d@%.2f, Shoulder:%d->%d@%.2f, Claw:%.2f, Distance:%.2f",
                 slide.getCurrentPosition(), slide.getTargetPosition(), slide.getPower(),
                 shoulder.getCurrentPosition(), shoulder.getTargetPosition(), shoulder.getPower(),
-                claw.getPosition(), colors.red, colors.blue, colors.green,
+                claw.getPosition(),
                 distanceSensor.getDistance(DistanceUnit.MM));
     }
 

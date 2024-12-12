@@ -18,10 +18,10 @@ public class RobotConfig {
 
    public static final String CLAW = "claw";
 
-   public static final String COLOR_SENSOR = "colorSensor";
+   public static final String DISTANCE_SENSOR = "distanceSensor";
 
    public static final double CLAW_RELEASE_POSITION = 0.88;
-   public static final double CLAW_HOLD_POSITION = 0.5;
+   public static final double CLAW_HOLD_POSITION = 0.33;
 
 
 

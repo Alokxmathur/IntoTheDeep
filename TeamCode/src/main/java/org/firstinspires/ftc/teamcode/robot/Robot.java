@@ -4,6 +4,7 @@ import android.util.Log;
 
 import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
+import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
@@ -290,7 +291,7 @@ public class Robot {
     public void handleArm(Gamepad gamePad1, Gamepad gamePad2) {
 
         //If both gamePad2 left and right trigger are pressed, stop inout motor
-        if (gamePad2.left_trigger > .2 && gamePad2.right_trigger > .2) {
+        if (gamePad2.left_bumper || gamePad2.right_bumper) {
             intake.abstain();
         }
         //If gamePad2 right trigger is pressed, start consuming samples
@@ -367,14 +368,17 @@ public class Robot {
             /**
              * If the intake is eating and the distance sensor sees an object, stop eating and abstain
              */
-            if (intake.isEating() && arm.getDistance() < 100) {
+            double distance = arm.getDistance();
+            if (intake.isEating() && distance < 180) {
                 intake.abstain();
+                Match.log("Abstained from eating because distance = " + distance);
             }
             /**
              * If the intake is expelling and the distance sensor does not see an object, stop expelling and abstain
              */
-            if (intake.isExpelling() && arm.getDistance() >= 150) {
+            if (intake.isExpelling() && arm.getDistance() >= 200) {
                 intake.abstain();
+                Match.log("Abstained from expelling because distance = " + distance);
             }
         }
     }

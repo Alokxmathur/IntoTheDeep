@@ -9,6 +9,7 @@ import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
 import com.qualcomm.robotcore.util.RobotLog;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.opmodes.autonomous.AutonomousHelper;
 import org.firstinspires.ftc.teamcode.robot.Robot;
 import org.firstinspires.ftc.teamcode.robot.RobotConfig;
 
@@ -35,8 +36,6 @@ public class Match {
     private Alliance.Color alliance;
     private Field.StartingPosition startingPosition;
     private String trajectoryError = "";
-
-    private long delayedStart;
 
     synchronized public static Match getNewInstance() {
         match = new Match();
@@ -110,9 +109,12 @@ public class Match {
             // Send telemetry message to signify robot context;
             telemetry.addData("State", status);
             telemetry.addData("Delayed Start", getDelayedStart() + "milliseconds");
+            /*
             telemetry.addData("Position", String.format(Locale.getDefault(),
                     "%.2f,%.2f@%.2f",
                     pose2d.position.x, pose2d.position.y, Math.toDegrees(pose2d.heading.toDouble())));
+
+             */
             telemetry.addData("Drive", robot.getDriveTrain().getStatus());
             telemetry.addData("Arm", robot.getArmStatus());
             telemetry.addData("Intake", robot.getIntakeStatus());
@@ -197,8 +199,11 @@ public class Match {
 
         packet.put("State", status);
         packet.put("Delayed Start", getDelayedStart() + "milliseconds");
+        /*
         packet.put("Position", String.format(Locale.getDefault(), "%.2f,%.2f@%.2f", pose2d.position.x,
                 pose2d.position.y, pose2d.heading.toDouble()));
+
+         */
         packet.put("Drive", robot.getDriveTrain().getStatus());
         packet.put("LED", robot.getLEDStatus().toString());
         packet.put("TrajectoryErr", getTrajectoryError());
@@ -221,10 +226,7 @@ public class Match {
         this.robot.setPattern(pattern);
     }
 
-    public void setDelayedStart(long delay) {
-        this.delayedStart = delay;
-    }
     public long getDelayedStart() {
-        return this.delayedStart;
+        return AutonomousHelper.getStartDelay();
     }
 }
