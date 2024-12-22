@@ -15,15 +15,11 @@ public abstract class AutonomousV1 extends AutonomousHelper {
         super.start();
         State state = new State("Deliver Specimen to high chamber");
         state.addPrimaryOperation(
-                new ArmOperation(ArmOperation.Type.High_Chamber_1, "Raise arm for high chamber"));
-        state.addPrimaryOperation(
-                new ArmOperation(ArmOperation.Type.High_Chamber_2, "Extend arm for high chamber"));
+                new ArmOperation(ArmOperation.Type.High_Chamber, "Raise arm for high chamber"));
         state.addPrimaryOperation(
                 new DriveForDistanceOperation(DISTANCE_TO_SUBMERSIBLE, RobotConfig.CAUTIOUS_SPEED, "Reach submersible"));
         state.addPrimaryOperation(
                 new ArmOperation(ArmOperation.Type.High_Chamber_Deposit, "Deposit on high chamber"));
-        state.addPrimaryOperation(
-                new ArmOperation(ArmOperation.Type.High_Chamber_Release, "Release from high chamber"));
         state.addPrimaryOperation(
                 new DriveForDistanceOperation(-DISTANCE_TO_SUBMERSIBLE/2, RobotConfig.CAUTIOUS_SPEED, "Retract from submersible"));
         states.add(state);
@@ -39,16 +35,14 @@ public abstract class AutonomousV1 extends AutonomousHelper {
                 new DriveForDistanceOperation(2*Field.TILE_WIDTH, RobotConfig.CAUTIOUS_SPEED, "Move toward ascent zone"));
 
         state.addSecondaryOperation(
-                new ArmOperation(ArmOperation.Type.High_Chamber_1, "Raise arm for high chamber"));
-        state.addSecondaryOperation(
-                new ArmOperation(ArmOperation.Type.High_Chamber_2, "Extend arm for high chamber"));
+                new ArmOperation(ArmOperation.Type.High_Chamber, "Raise arm for high chamber"));
         state.addPrimaryOperation(
                 new DriveForDistanceOperation(.5*Field.TILE_WIDTH, RobotConfig.CAUTIOUS_SPEED, "Move toward ascent zone"));
         states.add(state);
 
         state = new State("Touch ascent rung");
         state.addSecondaryOperation(
-                new ArmOperation(ArmOperation.Type.High_Chamber_Release, "Lower arm"));
+                new ArmOperation(ArmOperation.Type.High_Chamber_Deposit, "Lower arm"));
         states.add(state);
     }
 }

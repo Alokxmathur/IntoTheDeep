@@ -34,36 +34,30 @@ public abstract class AutonomousHelper extends OpMode {
      * Code to run ONCE when the driver hits INIT
      */
     public void init(Telemetry telemetry, Alliance.Color alliance, Field.StartingPosition startingPosition) {
-        try {
-            initStartTime = new Date();
-            this.match = Match.getNewInstance();
-            match.init();
-            Match.log("Match initialized, setting alliance to " + alliance
-                    + " and starting position to " + startingPosition);
-            match.setAlliance(alliance);
-            match.setStartingPosition(startingPosition);
-            field = match.getField();
+        initStartTime = new Date();
+        this.match = Match.getNewInstance();
+        match.init();
+        Match.log("Match initialized, setting alliance to " + alliance
+                + " and starting position to " + startingPosition);
+        match.setAlliance(alliance);
+        match.setStartingPosition(startingPosition);
+        field = match.getField();
 
-            //initialize field for the alliance and starting position
-            field.init(alliance, startingPosition);
-            //get our robot and initialize it
-            this.robot = match.getRobot();
-            Match.log("Initializing robot");
-            this.robot.init(hardwareMap, telemetry, match);
+        //initialize field for the alliance and starting position
+        field.init(alliance, startingPosition);
+        //get our robot and initialize it
+        this.robot = match.getRobot();
+        Match.log("Initializing robot");
+        this.robot.init(hardwareMap, telemetry, match);
 
-            //set the starting delay to be 0 milliseconds and add this operation in the first state
-            delayedStart = new WaitOperation(0, "Delay start");
-            State state = new State("Initial wait");
-            state.addPrimaryOperation(delayedStart);
-            states.add(state);
+        //set the starting delay to be 0 milliseconds and add this operation in the first state
+        delayedStart = new WaitOperation(0, "Delay start");
+        State state = new State("Initial wait");
+        state.addPrimaryOperation(delayedStart);
+        states.add(state);
 
-            telemetry.update();
-            initErrorHappened = false;
-        }
-        catch (Throwable e) {
-            RobotLog.logStackTrace(e);
-            initError = e.toString();
-        }
+        telemetry.update();
+        initErrorHappened = false;
     }
     /*
      * Code to run repeatedly after the driver hits INIT, but before they hit PLAY

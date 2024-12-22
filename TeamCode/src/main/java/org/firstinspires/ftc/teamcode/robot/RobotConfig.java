@@ -18,17 +18,13 @@ public class RobotConfig {
 
    public static final String CLAW = "claw";
 
-   public static final String DISTANCE_SENSOR = "distanceSensor";
+   public static final String COLOR_SENSOR = "distanceSensor";
 
-   public static final double CLAW_RELEASE_POSITION = 0.88;
-   public static final double CLAW_HOLD_POSITION = 0.33;
+   public static final double CLAW_RELEASE_POSITION = 0.42;
+   public static final double CLAW_HOLD_POSITION = 0.05;
 
-
-
-
-
-   public static final double CAUTIOUS_SPEED = 0.9;
-   public static final double APRIL_TAG_SPEED = 0.5;
+   public static final double CAUTIOUS_SPEED = 0.6;
+   public static final double APRIL_TAG_SPEED = 1.0;
     public static final String OTOS = "otos";
 
 
@@ -49,33 +45,27 @@ public class RobotConfig {
    public static final int ACCEPTABLE_SHOULDER_ERROR = 10;
    public static final double MAX_SHOULDER_POWER = 1.0;
 
-   public static final int ACCEPTABLE_WRIST_ERROR = 5;
-   public static final double MAX_WRIST_POWER = 0.5;
-
-   public static final ArmPosition ARM_STARTING_POSITION =
-           new ArmPosition(0, 0, RobotConfig.CLAW_HOLD_POSITION);
-
-   public static final ArmPosition ARM_HIGH_CHAMBER_POSITION_1 =
-           new ArmPosition(0, 1980, RobotConfig.CLAW_HOLD_POSITION);
-   public static final ArmPosition ARM_HIGH_CHAMBER_POSITION_2 =
-           new ArmPosition(700, 1980, RobotConfig.CLAW_HOLD_POSITION);
+   public static final ArmPosition ARM_LEVEL_POSITION =
+           new ArmPosition(0, 2400, RobotConfig.CLAW_HOLD_POSITION);
+   public static final ArmPosition ARM_HIGH_CHAMBER_POSITION =
+           new ArmPosition(2616, 2400, RobotConfig.CLAW_HOLD_POSITION);
    public static final ArmPosition ARM_HIGH_CHAMBER_DEPOSIT_POSITION =
-           new ArmPosition(700, 340, RobotConfig.CLAW_HOLD_POSITION);
+           new ArmPosition(ARM_HIGH_CHAMBER_POSITION.getSlide(), 1800, RobotConfig.CLAW_HOLD_POSITION);
    public static final ArmPosition ARM_HIGH_CHAMBER_RELEASE_POSITION =
-           new ArmPosition(700, 1600, RobotConfig.CLAW_RELEASE_POSITION);
+           new ArmPosition(ARM_HIGH_CHAMBER_POSITION.getSlide(), 2185, RobotConfig.CLAW_RELEASE_POSITION);
    public static final ArmPosition ARM_ASCENT_LEVEL_1_POSITION =
            new ArmPosition(1100, 1980, RobotConfig.CLAW_HOLD_POSITION);
    public static final ArmPosition ARM_ASCENT_LOWERED_POSITION =
            new ArmPosition(1100, 1600, RobotConfig.CLAW_HOLD_POSITION);
    public static final ArmPosition ARM_INTAKE_POSITION =
-           new ArmPosition(1300, 344, RobotConfig.CLAW_RELEASE_POSITION);
+           new ArmPosition(1500, 1030, RobotConfig.CLAW_RELEASE_POSITION);
    public static final ArmPosition ARM_SPECIMEN_INTAKE_POSITION =
-           new ArmPosition(200, 800, RobotConfig.CLAW_RELEASE_POSITION);
+           new ArmPosition(2050, 1265, RobotConfig.CLAW_RELEASE_POSITION);
 
    public static final ArmPosition ARM_LOWER_BASKET =
            new ArmPosition(2584, 2438, RobotConfig.CLAW_RELEASE_POSITION);
    public static final ArmPosition ARM_HIGHER_BASKET =
-           new ArmPosition(3580, 3178, RobotConfig.CLAW_RELEASE_POSITION);
+           new ArmPosition(3469, 3334, RobotConfig.CLAW_RELEASE_POSITION);
 
 
    public static final int X_PIXEL_COUNT = 1920;

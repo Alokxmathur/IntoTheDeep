@@ -64,6 +64,7 @@ public class DriveInDirectionOperation extends DriveForDistanceOperation {
                 rightSpeed /= max;
             }
 
+
             Match.log(String.format(Locale.getDefault(), "%.2f vs %.2f, Bearing error: %.2f, Setting power LF:%.2f,LR:%.2f,RF:%.2f,RR%.2f",
                     Math.toDegrees(direction), currentBearing, bearingError, leftSpeed, leftSpeed, rightSpeed, rightSpeed));
 

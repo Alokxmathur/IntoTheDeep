@@ -2,9 +2,11 @@ package org.firstinspires.ftc.teamcode.robot.components.drivetrain;
 
 
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Rotation2d;
 import com.acmerobotics.roadrunner.TimeTurn;
 import com.acmerobotics.roadrunner.Trajectory;
+import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -13,6 +15,7 @@ import com.qualcomm.robotcore.util.RobotLog;
 
 import org.firstinspires.ftc.teamcode.MecanumDrive;
 import org.firstinspires.ftc.teamcode.game.Match;
+import org.firstinspires.ftc.teamcode.messages.PoseMessage;
 import org.firstinspires.ftc.teamcode.robot.operations.BearingOperation;
 import org.firstinspires.ftc.teamcode.robot.operations.DriveForDistanceOperation;
 import org.firstinspires.ftc.teamcode.robot.operations.DriveToPositionOperation;
@@ -43,15 +46,15 @@ public class DriveTrain extends SparkFunOTOSDrive {
     }
 
     public Pose2d getPose() {
-        super.updatePoseEstimate();
+        updatePoseEstimate();
         return super.pose;
     }
 
-    /** Set power of left front motor
-     *
-     * @param power - the power to set
-     *
-     */
+        /** Set power of left front motor
+         *
+         * @param power - the power to set
+         *
+         */
     public void setLeftFrontPower(double power) {
         //super.leftFront.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         super.leftFront.setPower(power);
@@ -97,10 +100,10 @@ public class DriveTrain extends SparkFunOTOSDrive {
         stop();
 
         int encoderChange = SilverTitansDriveConstants.mmToEncoderTicks(operation.getDistance());
-        this.leftFront.setTargetPosition(leftFront.getCurrentPosition() + encoderChange);
-        this.rightFront.setTargetPosition(rightFront.getCurrentPosition() + encoderChange);
-        this.leftBack.setTargetPosition(leftBack.getCurrentPosition() + encoderChange);
-        this.rightBack.setTargetPosition(rightBack.getCurrentPosition() + encoderChange);
+        this.leftFront.setTargetPosition(encoderChange);
+        this.rightFront.setTargetPosition(encoderChange);
+        this.leftBack.setTargetPosition(encoderChange);
+        this.rightBack.setTargetPosition(encoderChange);
 
         this.leftFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         this.rightFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -126,63 +129,6 @@ public class DriveTrain extends SparkFunOTOSDrive {
         this.leftBack.setPower(operation.getLeftSpeed());
         this.rightBack.setPower(operation.getRightSpeed());
     }
-    /**
-     * Handle operation to turn clockwise for the specified distance
-     * @param operation
-     *
-     * We do this by computing how much each wheel must be rotated to travel the specified distance
-     * and then commanding the motors to reach the new desired encoder values
-     *
-     */
-    public void handleOperation(TurnClockwiseOperation operation) {
-        stop();
-
-        int encoderChange = SilverTitansDriveConstants.mmToEncoderTicks(operation.getDistance());
-        this.rightFront.setTargetPosition(rightFront.getCurrentPosition() - encoderChange);
-        this.rightBack.setTargetPosition(rightBack.getCurrentPosition() - encoderChange);
-        this.leftFront.setTargetPosition(leftFront.getCurrentPosition() + encoderChange);
-        this.leftBack.setTargetPosition(leftBack.getCurrentPosition() + encoderChange);
-
-        this.rightFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        this.rightBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        this.leftFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        this.leftBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        this.rightFront.setPower(operation.getSpeed());
-        this.rightBack.setPower(operation.getSpeed());
-        this.leftFront.setPower(operation.getSpeed());
-        this.leftBack.setPower(operation.getSpeed());
-    }
-
-
-    /**
-     * Handle operation to turn anti-clockwise for the specified distance
-     * @param operation
-     *
-     * We do this by computing how much each wheel must be rotated to travel the specified distance
-     * and then commanding the motors to reach the new desired encoder values
-     *
-     */
-    public void handleOperation(TurnAntiClockwiseOperation operation) {
-        stop();
-
-        int encoderChange = SilverTitansDriveConstants.mmToEncoderTicks(operation.getDistance());
-        this.rightFront.setTargetPosition(rightFront.getCurrentPosition() + encoderChange);
-        this.rightBack.setTargetPosition(rightBack.getCurrentPosition() + encoderChange);
-        this.leftFront.setTargetPosition(leftFront.getCurrentPosition() - encoderChange);
-        this.leftBack.setTargetPosition(leftBack.getCurrentPosition() - encoderChange);
-
-        this.rightFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        this.rightBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        this.leftFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        this.leftBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        this.rightFront.setPower(operation.getSpeed());
-        this.rightBack.setPower(operation.getSpeed());
-        this.leftFront.setPower(operation.getSpeed());
-        this.leftBack.setPower(operation.getSpeed());
-    }
-
     /**
      * Handle operation to strafe left for the specified distance perpendicular to the direction the robot is facing
      * @param operation

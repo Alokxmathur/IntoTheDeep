@@ -109,12 +109,14 @@ public class Match {
             // Send telemetry message to signify robot context;
             telemetry.addData("State", status);
             telemetry.addData("Delayed Start", getDelayedStart() + "milliseconds");
+
             /*
             telemetry.addData("Position", String.format(Locale.getDefault(),
                     "%.2f,%.2f@%.2f",
                     pose2d.position.x, pose2d.position.y, Math.toDegrees(pose2d.heading.toDouble())));
 
              */
+
             telemetry.addData("Drive", robot.getDriveTrain().getStatus());
             telemetry.addData("Arm", robot.getArmStatus());
             telemetry.addData("Intake", robot.getIntakeStatus());
@@ -199,11 +201,10 @@ public class Match {
 
         packet.put("State", status);
         packet.put("Delayed Start", getDelayedStart() + "milliseconds");
-        /*
+
         packet.put("Position", String.format(Locale.getDefault(), "%.2f,%.2f@%.2f", pose2d.position.x,
                 pose2d.position.y, pose2d.heading.toDouble()));
 
-         */
         packet.put("Drive", robot.getDriveTrain().getStatus());
         packet.put("LED", robot.getLEDStatus().toString());
         packet.put("TrajectoryErr", getTrajectoryError());

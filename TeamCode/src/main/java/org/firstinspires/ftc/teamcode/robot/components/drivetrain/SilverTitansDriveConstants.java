@@ -32,7 +32,7 @@ public class SilverTitansDriveConstants {
      * angular distances although most angular parameters are wrapped in Math.toRadians() for
      * convenience. Make sure to exclude any gear ratio included in MOTOR_CONFIG from GEAR_RATIO.
      */
-    public static double WHEEL_RADIUS = 100.0/2.0/Field.MM_PER_INCH; // Rev 75 mm diameter mecanum
+    public static double WHEEL_RADIUS = 104.0/2.0/Field.MM_PER_INCH; // Rev 75 mm diameter mecanum
     public static double GEAR_RATIO = 1; // output (wheel) speed / input (motor) speed
 
     public static double encoderTicksToInches(double ticks) {

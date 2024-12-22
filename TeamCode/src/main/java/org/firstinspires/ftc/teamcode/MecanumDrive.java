@@ -65,14 +65,14 @@ public abstract class MecanumDrive {
                 RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
 
         // drive model parameters
-        public double inPerTick = 1;
-        public double lateralInPerTick = inPerTick;
-        public double trackWidthTicks = 0;
+        public double inPerTick = 24.0*4/4019.5;
+        public double lateralInPerTick = 72/2660;
+        public double trackWidthTicks = 111.5730686495726;
 
         // feedforward parameters (in tick units)
-        public double kS = 1;
-        public double kV = 0;
-        public double kA = 0;
+        public double kS = 0.9671090168572141;
+        public double kV = 0.17771845184564564;
+        public double kA = 0.000001;
 
         // path profile parameters (in inches)
         public double maxWheelVel = 50;
@@ -84,9 +84,9 @@ public abstract class MecanumDrive {
         public double maxAngAccel = Math.PI;
 
         // path controller gains
-        public double axialGain = 0.0;
-        public double lateralGain = 0.0;
-        public double headingGain = 0.0; // shared with turn
+        public double axialGain = 1.0;
+        public double lateralGain = 1.0;
+        public double headingGain = 1.0; // shared with turn
 
         public double axialVelGain = 0.0;
         public double lateralVelGain = 0.0;
@@ -141,7 +141,8 @@ public abstract class MecanumDrive {
             imu = lazyImu.get();
 
             // TODO: reverse encoders if needed
-            //   leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
+            leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
+            leftBack.setDirection(DcMotorSimple.Direction.REVERSE);
         }
 
         @Override

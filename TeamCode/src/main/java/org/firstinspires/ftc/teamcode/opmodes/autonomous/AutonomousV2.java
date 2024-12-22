@@ -3,15 +3,15 @@ package org.firstinspires.ftc.teamcode.opmodes.autonomous;
 import org.firstinspires.ftc.teamcode.game.Field;
 import org.firstinspires.ftc.teamcode.robot.RobotConfig;
 import org.firstinspires.ftc.teamcode.robot.operations.ArmOperation;
-import org.firstinspires.ftc.teamcode.robot.operations.BearingOperation;
-import org.firstinspires.ftc.teamcode.robot.operations.DriveForDistanceOperation;
 import org.firstinspires.ftc.teamcode.robot.operations.DriveInDirectionOperation;
-import org.firstinspires.ftc.teamcode.robot.operations.DriveInDirectionUntilAprilTagOperation;
 import org.firstinspires.ftc.teamcode.robot.operations.DriveToAprilTag;
 import org.firstinspires.ftc.teamcode.robot.operations.State;
 import org.firstinspires.ftc.teamcode.robot.operations.StrafeLeftForDistanceOperation;
+import org.firstinspires.ftc.teamcode.robot.operations.StrafeLeftForDistanceWithHeadingOperation;
 import org.firstinspires.ftc.teamcode.robot.operations.StrafeRightForDistanceOperation;
+import org.firstinspires.ftc.teamcode.robot.operations.StrafeRightForDistanceWithHeadingOperation;
 import org.firstinspires.ftc.teamcode.robot.operations.StrafeRightToAprilTagOperation;
+import org.firstinspires.ftc.teamcode.robot.operations.TurnClockwiseOperation;
 
 /**
  * This is v2 of the IntoTheDeep autonomous
@@ -24,7 +24,9 @@ import org.firstinspires.ftc.teamcode.robot.operations.StrafeRightToAprilTagOper
  * parks in the observation zone
  */
 public abstract class AutonomousV2 extends AutonomousHelper {
-    double DISTANCE_TO_SUBMERSIBLE = 30.0 * Field.MM_PER_INCH;
+
+    public static final double DISTANCE_TO_PUSH_SAMPLES = 44.0 * Field.MM_PER_INCH;
+    double DISTANCE_TO_SUBMERSIBLE = 15.0 * Field.MM_PER_INCH;
     double RETRACTION_FROM_WALL = 10 * Field.MM_PER_INCH;
     @Override
     public void start() {
@@ -40,17 +42,16 @@ public abstract class AutonomousV2 extends AutonomousHelper {
          */
         State state = new State("Deliver Specimen to high chamber");
         state.addPrimaryOperation(
-                new ArmOperation(ArmOperation.Type.High_Chamber_1, "Raise arm for high chamber"));
-        state.addPrimaryOperation(
-                new ArmOperation(ArmOperation.Type.High_Chamber_2, "Extend arm for high chamber"));
-        state.addPrimaryOperation(
                 new DriveInDirectionOperation(DISTANCE_TO_SUBMERSIBLE, 0, RobotConfig.CAUTIOUS_SPEED, "Reach submersible"));
-        state.addPrimaryOperation(
+        state.addSecondaryOperation(new ArmOperation(ArmOperation.Type.Level, "Level Arm"));
+        state.addSecondaryOperation(
+                new ArmOperation(ArmOperation.Type.High_Chamber, "Raise arm for high chamber"));
+        state.addSecondaryOperation(
                 new ArmOperation(ArmOperation.Type.High_Chamber_Deposit, "Deposit on high chamber"));
-        state.addPrimaryOperation(
-                new ArmOperation(ArmOperation.Type.High_Chamber_Release, "Release from high chamber"));
-        state.addPrimaryOperation(
-                new DriveInDirectionOperation(-16*Field.MM_PER_INCH, 0, RobotConfig.CAUTIOUS_SPEED, "Retract from submersible"));
+        state.addSecondaryOperation(
+                new ArmOperation(ArmOperation.Type.High_Chamber_Release, "Release specimen"));
+        state.addSecondaryOperation(
+                new DriveInDirectionOperation(-6*Field.MM_PER_INCH, 0, RobotConfig.CAUTIOUS_SPEED, "Retract from submersible"));
         states.add(state);
 
         /**
@@ -65,17 +66,14 @@ public abstract class AutonomousV2 extends AutonomousHelper {
          * We also raise the arm so it is almost vertical as we do not want it to interfere with movements
          */
         state = new State("Reach zone to push samples");
-        state.addPrimaryOperation(new BearingOperation(Math.toRadians(-90), "Rotate so april tag can be seen"));
-        state.addPrimaryOperation(new DriveInDirectionOperation(1.0*Field.TILE_WIDTH, Math.toRadians(-90),
-                RobotConfig.CAUTIOUS_SPEED, "Approach april tag"));
-        state.addPrimaryOperation(new BearingOperation(Math.toRadians(-90), "Realign towards observation zone"));
-        //get robot 27 inches away from right wall and 12 inches to the left of the april tag so we are centered on the tile
-        state.addPrimaryOperation(
-                new DriveToAprilTag(12*Field.MM_PER_INCH, 27*Field.MM_PER_INCH, "Move to april tag"));
-        state.addPrimaryOperation(new BearingOperation(Math.toRadians(180), "Rotate towards observation zone"));
-        state.addPrimaryOperation(
-                new DriveInDirectionOperation(-Field.TILE_WIDTH, Math.toRadians(180), RobotConfig.CAUTIOUS_SPEED,
-                        "Move backwards to clear samples"));
+        state.addPrimaryOperation(new TurnClockwiseOperation(Math.toRadians(-90), 1, "Face april tag"));
+        state.addPrimaryOperation(new DriveToAprilTag(0, 28*Field.MM_PER_INCH, "Get to april tag"));
+        state.addPrimaryOperation(new TurnClockwiseOperation(Math.toRadians(180), 1, "Face wall"));
+        state.addPrimaryOperation(new DriveInDirectionOperation(-1.5*Field.TILE_WIDTH, Math.toRadians(180),
+                RobotConfig.CAUTIOUS_SPEED, "Move to top of samples"));
+        state.addPrimaryOperation(new StrafeLeftForDistanceOperation(
+                14*Field.MM_PER_INCH, RobotConfig.CAUTIOUS_SPEED, "Strafe to get on sample 1"));
+        state.addSecondaryOperation(new ArmOperation(ArmOperation.Type.Level, "Get arm level"));
         states.add(state);
 
         /**
@@ -87,10 +85,11 @@ public abstract class AutonomousV2 extends AutonomousHelper {
 
         state = new State("Push sample 1");
         state.addPrimaryOperation(
-                new StrafeLeftForDistanceOperation(15*Field.MM_PER_INCH, RobotConfig.CAUTIOUS_SPEED, "Strafe to reach first sample"));
-        state.addPrimaryOperation(
-                new DriveInDirectionOperation(1.5*Field.TILE_WIDTH, Math.toRadians(180), RobotConfig.CAUTIOUS_SPEED,
+                new DriveInDirectionOperation(DISTANCE_TO_PUSH_SAMPLES, Math.toRadians(180), RobotConfig.CAUTIOUS_SPEED,
                         "Push sample 1 into observation zone"));
+        state.addPrimaryOperation(new DriveInDirectionOperation(
+                -DISTANCE_TO_PUSH_SAMPLES, Math.toRadians(180), RobotConfig.CAUTIOUS_SPEED,
+                "Retract from observation zone"));
         states.add(state);
 
         /**
@@ -101,15 +100,13 @@ public abstract class AutonomousV2 extends AutonomousHelper {
          * 3. Moving towards the observation zone
          */
         state = new State("Push sample 2");
+        state.addPrimaryOperation(new StrafeLeftForDistanceOperation(
+                9*Field.MM_PER_INCH, RobotConfig.CAUTIOUS_SPEED, "Strafe to get on sample 2"));
         state.addPrimaryOperation(
-                new DriveInDirectionOperation(-1.5*Field.TILE_WIDTH, Math.toRadians(180), RobotConfig.CAUTIOUS_SPEED,
-                        "Retract back to push second sample"));
-        state.addPrimaryOperation(
-                new StrafeLeftForDistanceOperation(9*Field.MM_PER_INCH, RobotConfig.CAUTIOUS_SPEED, "Strafe to reach second sample"));
-        state.addPrimaryOperation(
-                new DriveInDirectionOperation(1.5*Field.TILE_WIDTH, Math.toRadians(180), RobotConfig.CAUTIOUS_SPEED,
+                new DriveInDirectionOperation(DISTANCE_TO_PUSH_SAMPLES, Math.toRadians(180), RobotConfig.CAUTIOUS_SPEED/2,
                         "Push sample 2 into observation zone"));
-        //TODO - add movement of arm so specimen can be picked up from the wall
+        state.addSecondaryOperation(new ArmOperation(ArmOperation.Type.Specimen_Intake, "Get to specimen intake level"));
+        state.addPrimaryOperation(new ArmOperation(ArmOperation.Type.Hold, "Grab specimen"));
         states.add(state);
 
         /**
@@ -124,23 +121,26 @@ public abstract class AutonomousV2 extends AutonomousHelper {
          * 7. retracting from the submersible for latter operations
          */
         state = new State("Deliver first specimen from observation zone");
-        //TODO - add code to lift specimen from wall
         state.addPrimaryOperation(
-                new DriveInDirectionOperation(-RETRACTION_FROM_WALL, Math.toRadians(180), RobotConfig.CAUTIOUS_SPEED,
-                        "Retract back to clear wall"));
+                new DriveInDirectionOperation(-2*Field.MM_PER_INCH, Math.toRadians(180), RobotConfig.CAUTIOUS_SPEED, "Retract a bit"));
         state.addPrimaryOperation(
                 new StrafeRightToAprilTagOperation( "Strafe right to reach april tag"));
-        state.addPrimaryOperation(new BearingOperation(Math.toRadians(0), "Rotate towards submersible"));
+        state.addPrimaryOperation(new DriveToAprilTag(Math.toRadians(0), 18*Field.MM_PER_INCH, "Align with april tag"));
+        state.addPrimaryOperation(new TurnClockwiseOperation(Math.toRadians(0), 1, "Rotate towards submersible"));
+
+        state.addSecondaryOperation(new ArmOperation(ArmOperation.Type.Level, "Retract"));
+        states.add(state);
+
+        /**
+         * Deposit second specimen
+         */
+        state = new State("Deposit second specimen");
         state.addPrimaryOperation(
-                new ArmOperation(ArmOperation.Type.High_Chamber_2, "Extend arm for high chamber"));
-        state.addPrimaryOperation(
-                new DriveInDirectionOperation(DISTANCE_TO_SUBMERSIBLE - RETRACTION_FROM_WALL, 0, RobotConfig.CAUTIOUS_SPEED, "Reach submersible"));
+                new ArmOperation(ArmOperation.Type.High_Chamber, "Raise to high chamber"));
         state.addPrimaryOperation(
                 new ArmOperation(ArmOperation.Type.High_Chamber_Deposit, "Deposit on high chamber"));
         state.addPrimaryOperation(
-                new ArmOperation(ArmOperation.Type.High_Chamber_Release, "Release from high chamber"));
-        state.addPrimaryOperation(
-                new DriveInDirectionOperation(-DISTANCE_TO_SUBMERSIBLE/2, 0, RobotConfig.CAUTIOUS_SPEED, "Retract from submersible"));
+                new ArmOperation(ArmOperation.Type.High_Chamber_Release, "Release specimen"));
         states.add(state);
 
         /**
@@ -151,10 +151,9 @@ public abstract class AutonomousV2 extends AutonomousHelper {
          */
         state = new State("Reach observation zone");
         state.addPrimaryOperation(
-                new StrafeRightForDistanceOperation(2*Field.TILE_WIDTH, RobotConfig.CAUTIOUS_SPEED, "Move toward observation zone"));
+                new DriveInDirectionOperation(-6*Field.MM_PER_INCH, 0, RobotConfig.CAUTIOUS_SPEED, "Retract a bit"));
         state.addPrimaryOperation(
-                new DriveInDirectionOperation(-RETRACTION_FROM_WALL, Math.toRadians(0), RobotConfig.CAUTIOUS_SPEED,
-                        "Move towards wall"));
+                new StrafeRightForDistanceOperation(2*Field.TILE_WIDTH, RobotConfig.CAUTIOUS_SPEED, "Move toward observation zone"));
         states.add(state);
     }
 }

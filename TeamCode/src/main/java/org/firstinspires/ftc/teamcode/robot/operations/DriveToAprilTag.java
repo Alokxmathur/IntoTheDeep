@@ -58,7 +58,7 @@ public class DriveToAprilTag extends Operation {
         AprilTagDetection desiredTag;
         double rangeError = 0, headingError = 0, yawError = 0;
         //only do something if we are seeing an april tag
-        if ((desiredTag = findTarget(14)) != null) {
+        if ((desiredTag = findTarget()) != null) {
             // Determine heading, range and Yaw (tag image rotation) error so we can use them to control the robot automatically.
             rangeError      = (desiredTag.ftcPose.range - (yOffset/Field.MM_PER_INCH));
             headingError    = desiredTag.ftcPose.bearing;
@@ -80,11 +80,14 @@ public class DriveToAprilTag extends Operation {
             if (rangeError < 1 ) {
                 arrived = true;
             }
+            /*
             Match.log(String.format(Locale.getDefault(),
                     "Drive to april tag: yError:%.2f, heading error: %.2f," +
                             "drive: %.2f, strafe: %.2f, turn: %.2f",
                     rangeError, headingError,
                     drive, strafe, turn));
+
+             */
         }
         else {
             //if we are not seeing the tag, we say we have arrived as there is no chance we are going to see it
@@ -123,14 +126,12 @@ public class DriveToAprilTag extends Operation {
      * Return an april tag detection if it is seen. Return null if it is not
      * @return
      */
-    public static AprilTagDetection findTarget(int targetId) {
+    public static AprilTagDetection findTarget() {
         // Step through the list of detected tags and look for a matching tag
         List<AprilTagDetection> currentDetections = Match.getInstance().getRobot().getVisionPortal().getAprilTags();
         //Match.log("Found " + currentDetections.size() + " april tags");
-        for (AprilTagDetection detection: currentDetections) {
-            if (detection.id == targetId) {
-                return detection;
-            }
+        if (currentDetections != null && !currentDetections.isEmpty()) {
+            return currentDetections.get(0);
         }
         return null;
     }

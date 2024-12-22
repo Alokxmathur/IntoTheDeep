@@ -12,6 +12,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.game.Alliance;
 import org.firstinspires.ftc.teamcode.game.Field;
 import org.firstinspires.ftc.teamcode.game.Match;
+import org.firstinspires.ftc.teamcode.pedroPathing.follower.Follower;
 import org.firstinspires.ftc.teamcode.robot.components.Arm;
 import org.firstinspires.ftc.teamcode.robot.components.Intake;
 import org.firstinspires.ftc.teamcode.robot.components.LED;
@@ -88,11 +89,12 @@ public class Robot {
 
     //Components
     DriveTrain driveTrain;
+
+    Follower follower;
     LED led;
     Arm arm;
     Intake intake;
     SilverTitansVisionPortal visionPortal;
-    OTOS otos;
 
     //Our sensors etc.
 
@@ -143,6 +145,8 @@ public class Robot {
         telemetry.addData("Status", "Initializing drive train, please wait");
         telemetry.update();
         this.driveTrain = new DriveTrain(hardwareMap);
+
+        follower = new Follower(hardwareMap);
     }
 
     public void initVision() {
@@ -152,8 +156,6 @@ public class Robot {
         telemetry.update();
         this.visionPortal = new SilverTitansVisionPortal();
         this.visionPortal.init(hardwareMap);
-        this.otos = new OTOS();
-        this.otos.init(hardwareMap);
     }
 
     /**
@@ -187,10 +189,6 @@ public class Robot {
 
     public void queueTertiaryOperation(Operation operation) {
         this.operationThreadTertiary.queueUpOperation(operation);
-    }
-
-    public OTOS getOTOS() {
-        return otos;
     }
 
     public boolean allOperationsCompleted() {
@@ -309,7 +307,7 @@ public class Robot {
                 queueSecondaryOperation(new IntakeOperation(IntakeOperation.Type.Eat, "Start intake"));
             }
             if (gamePad2.b) {
-                queueSecondaryOperation(new ArmOperation(ArmOperation.Type.Lower_Basket, "Lower basket position"));
+                queueSecondaryOperation(new ArmOperation(ArmOperation.Type.High_Chamber, "High chamber position"));
             }
             if (gamePad2.y) {
                 queueSecondaryOperation(new ArmOperation(ArmOperation.Type.Higher_Basket, "Higher basket position"));
@@ -357,28 +355,13 @@ public class Robot {
                 arm.decrementReleaserPosition();
             }
             if (gamePad2.dpad_left) {
-                arm.clawRetainPosition();
+                arm.clawReleasePosition();
             }
             if (gamePad2.dpad_right) {
-                arm.clawReleasePosition();
+                arm.clawRetainPosition();
             }
             if(gamePad2.x) {
                 //reset
-            }
-            /**
-             * If the intake is eating and the distance sensor sees an object, stop eating and abstain
-             */
-            double distance = arm.getDistance();
-            if (intake.isEating() && distance < 180) {
-                intake.abstain();
-                Match.log("Abstained from eating because distance = " + distance);
-            }
-            /**
-             * If the intake is expelling and the distance sensor does not see an object, stop expelling and abstain
-             */
-            if (intake.isExpelling() && arm.getDistance() >= 200) {
-                intake.abstain();
-                Match.log("Abstained from expelling because distance = " + distance);
             }
         }
     }
@@ -430,4 +413,7 @@ public class Robot {
         return this.led;
     }
 
+    public Follower getFollower() {
+        return follower;
+    }
 }
