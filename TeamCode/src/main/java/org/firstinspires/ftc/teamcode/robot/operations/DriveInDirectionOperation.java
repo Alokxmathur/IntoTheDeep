@@ -42,7 +42,7 @@ public class DriveInDirectionOperation extends DriveForDistanceOperation {
 
     public boolean isComplete() {
         double currentBearing =
-                Math.toDegrees(Match.getInstance().getRobot().getPose().heading.toDouble());
+                Math.toDegrees(Match.getInstance().getRobot().getPose().getHeading());
         if (driveTrain.driveTrainWithinRange()) {
             return true;
         } else {

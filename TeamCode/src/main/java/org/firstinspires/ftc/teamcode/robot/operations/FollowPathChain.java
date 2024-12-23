@@ -4,24 +4,25 @@ import org.firstinspires.ftc.teamcode.game.Match;
 import org.firstinspires.ftc.teamcode.pedroPathing.follower.Follower;
 import org.firstinspires.ftc.teamcode.pedroPathing.localization.Pose;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.Path;
+import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.PathChain;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.Point;
 
-public class FollowPath extends Operation {
-    Path path;
+public class FollowPathChain extends Operation {
+    PathChain pathChain;
     Point endPoint;
     Follower follower;
 
     double accuracy;
-    public FollowPath(Path path, double accuracy, String title) {
-        this.path = path;
-        this.endPoint = path.getPoint(1);
+    public FollowPathChain(PathChain pathChain, double accuracy, String title) {
+        this.pathChain = pathChain;
+        this.endPoint = pathChain.getPath(pathChain.size()-1).getPoint(1);
         this.accuracy = accuracy;
         this.follower = Match.getInstance().getRobot().getFollower();
         this.title = title;
     }
 
-    public FollowPath(Path path, String title) {
-        this(path, 1, title);
+    public FollowPathChain(PathChain pathChain, String title) {
+        this(pathChain, 1, title);
     }
 
     /**
@@ -43,7 +44,7 @@ public class FollowPath extends Operation {
 
     @Override
     public void startOperation() {
-        follower.followPath(path, true);
+        follower.followPath(pathChain);
     }
 
     @Override
@@ -51,7 +52,7 @@ public class FollowPath extends Operation {
     }
 
     public String toString() {
-        return "FollowPath: " + title;
+        return "FollowPathChain: " + title;
     }
 
     public void setAccuracy(double accuracy) {

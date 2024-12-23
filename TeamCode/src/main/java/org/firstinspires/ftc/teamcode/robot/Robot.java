@@ -13,6 +13,7 @@ import org.firstinspires.ftc.teamcode.game.Alliance;
 import org.firstinspires.ftc.teamcode.game.Field;
 import org.firstinspires.ftc.teamcode.game.Match;
 import org.firstinspires.ftc.teamcode.pedroPathing.follower.Follower;
+import org.firstinspires.ftc.teamcode.pedroPathing.localization.Pose;
 import org.firstinspires.ftc.teamcode.robot.components.Arm;
 import org.firstinspires.ftc.teamcode.robot.components.Intake;
 import org.firstinspires.ftc.teamcode.robot.components.LED;
@@ -376,8 +377,9 @@ public class Robot {
         initVision();
     }
 
-    public Pose2d getPose() {
-        return driveTrain.getPose();
+    public Pose getPose() {
+        follower.updatePose();
+        return follower.getPose();
     }
     public DriveTrain getDriveTrain() {
         return this.driveTrain;

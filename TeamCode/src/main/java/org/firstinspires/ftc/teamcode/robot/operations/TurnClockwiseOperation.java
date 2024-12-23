@@ -33,10 +33,9 @@ public class TurnClockwiseOperation extends Operation {
 
     @Override
     public boolean isComplete() {
-        double error = AngleUnit.normalizeDegrees(Math.toDegrees((Match.getInstance().getRobot().getPose().heading.toDouble()))
+        double error = AngleUnit.normalizeDegrees(Math.toDegrees((Match.getInstance().getRobot().getPose().getHeading()))
                 - AngleUnit.normalizeDegrees(Math.toDegrees(bearing)));
         double speedToUse = Math.max(Math.min(Math.abs(error) * COEFFECIENT, speed), .2);
-        //Match.log("Bearing error = " + error + ", speed to use=" + speedToUse);
         DriveTrain driveTrain = Match.getInstance().getRobot().getDriveTrain();
         driveTrain.setLeftFrontPower(speedToUse);
         driveTrain.setLeftBackPower(speedToUse);

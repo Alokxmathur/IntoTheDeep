@@ -47,7 +47,7 @@ public class StrafeLeftForDistanceWithHeadingOperation extends DriveTrainOperati
         }
         else {
             double currentBearing =
-                    Math.toDegrees(Match.getInstance().getRobot().getPose().heading.toDouble());
+                    Math.toDegrees(Match.getInstance().getRobot().getPose().getHeading());
             // adjust relative SPEED based on desiredHeading error.
             double bearingError = AngleUnit.normalizeDegrees(Math.toDegrees(heading)
                     - currentBearing);

@@ -1,8 +1,10 @@
 package org.firstinspires.ftc.teamcode.opmodes.autonomous;
 
+import org.firstinspires.ftc.teamcode.game.Alliance;
 import org.firstinspires.ftc.teamcode.game.Field;
 import org.firstinspires.ftc.teamcode.game.Match;
 import org.firstinspires.ftc.teamcode.pedroPathing.localization.Pose;
+import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.BezierCurve;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.BezierLine;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.Path;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.PathChain;
@@ -29,8 +31,9 @@ import org.firstinspires.ftc.teamcode.robot.operations.TurnClockwiseOperation;
  * parks in the observation zone
  */
 public abstract class AutonomousPedro extends AutonomousHelper {
-    private final Pose startPose = new Pose(135, 88, Math.toRadians(180));
-    private final Pose firstSpecimenScoringPose = new Pose(125, 88, Math.toRadians(180));
+    private final Pose startPose = new Pose(135, 80, Math.toRadians(180));
+    private final Pose firstSpecimenScoringPose = new Pose(125, 80, Math.toRadians(180));
+    private final Point interimPoint =  new Point(108.000, 108.000, Point.CARTESIAN);
 
     public static final double DISTANCE_TO_PUSH_SAMPLES = 44.0 * Field.MM_PER_INCH;
     double DISTANCE_TO_SUBMERSIBLE = 15.0 * Field.MM_PER_INCH;
@@ -50,7 +53,8 @@ public abstract class AutonomousPedro extends AutonomousHelper {
          */
         State state = new State("Deliver Specimen to high chamber");
         Path reachSubmersiblePath = new Path(new BezierLine(new Point(startPose), new Point(firstSpecimenScoringPose)));
-        reachSubmersiblePath.setLinearHeadingInterpolation(startPose.getHeading(), firstSpecimenScoringPose.getHeading());
+        reachSubmersiblePath.setLinearHeadingInterpolation(startPose.getHeading(), firstSpecimenScoringPose.getHeading(),
+                .8);
         state.addPrimaryOperation(new FollowPath(reachSubmersiblePath, "Reach submersible"));
 
         /*
@@ -63,10 +67,29 @@ public abstract class AutonomousPedro extends AutonomousHelper {
                 new ArmOperation(ArmOperation.Type.High_Chamber_Release, "Release specimen"));
 
          */
-        Path reachIterimPointPath = new Path(new BezierLine(new Point(firstSpecimenScoringPose),
-                new Point(111, 112)));
-        reachIterimPointPath.setLinearHeadingInterpolation(firstSpecimenScoringPose.getHeading(), Math.toRadians(0));
-        state.addPrimaryOperation(new FollowPath(reachSubmersiblePath, "Reach interim path"));
+        Path reachInterimPointPath =
+                new Path(
+                    new BezierCurve(
+                            new Point(125.000, 80.000, Point.CARTESIAN),
+                            new Point(130.000, 100.000, Point.CARTESIAN),
+                            new Point(120.000, 110.000, Point.CARTESIAN),
+                            interimPoint
+                    )
+                );
+        reachInterimPointPath.setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(0), 0.8);
+        state.addPrimaryOperation(new FollowPath(reachInterimPointPath, "Reach interim point"));
+
+        Path reachSamplePath =
+                new Path(
+                        new BezierCurve(
+                                new Point(Match.getInstance().getRobot().getFollower().getPose()),
+                                //new Point(108.000, 108.000, Point.CARTESIAN),
+                                new Point(69.659, 106.549, Point.CARTESIAN),
+                                new Point(76, 120.000, Point.CARTESIAN)
+                        )
+                );
+        reachSamplePath.setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0));
+        state.addPrimaryOperation(new FollowPath(reachSamplePath, "Reach sample point"));
 
         states.add(state);
 
@@ -171,5 +194,9 @@ public abstract class AutonomousPedro extends AutonomousHelper {
         state.addPrimaryOperation(
                 new StrafeRightForDistanceOperation(2*Field.TILE_WIDTH, RobotConfig.CAUTIOUS_SPEED, "Move toward observation zone"));
         //states.add(state);
+    }
+    @Override
+    public void init() {
+        super.init(telemetry, Alliance.Color.RED, Field.StartingPosition.Right);
     }
 }

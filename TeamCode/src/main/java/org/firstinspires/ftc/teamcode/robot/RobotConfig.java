@@ -25,14 +25,13 @@ public class RobotConfig {
 
    public static final double CAUTIOUS_SPEED = 0.6;
    public static final double APRIL_TAG_SPEED = 1.0;
-    public static final String OTOS = "otos";
+   public static final String OTOS = "otos";
 
-
-    //Robot center from back is five and half inches away
-   public static double ROBOT_CENTER_FROM_BACK = 8 * Field.MM_PER_INCH;
+   //Robot center from back is five and half inches away
+   public static double ROBOT_CENTER_FROM_BACK = 17.375 * Field.MM_PER_INCH/2;
 
    //Robot center from front is four and a half inches
-   public static double ROBOT_CENTER_FROM_FRONT = 8 * Field.MM_PER_INCH;
+   public static double ROBOT_CENTER_FROM_FRONT = 17.375 * Field.MM_PER_INCH/2;
    public static final double ROBOT_WIDTH = 14.5 * Field.MM_PER_INCH;
 
    public static final double ROBOT_LENGTH = ROBOT_CENTER_FROM_BACK + ROBOT_CENTER_FROM_FRONT;
