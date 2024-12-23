@@ -1,14 +1,14 @@
 package org.firstinspires.ftc.teamcode.opmodes.autonomous;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.util.RobotLog;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.game.Alliance;
 import org.firstinspires.ftc.teamcode.game.Field;
 import org.firstinspires.ftc.teamcode.game.Match;
+import org.firstinspires.ftc.teamcode.pedroPathing.localization.Pose;
 import org.firstinspires.ftc.teamcode.robot.Robot;
-import org.firstinspires.ftc.teamcode.robot.components.vision.detector.ObjectDetector;
+import org.firstinspires.ftc.teamcode.robot.RobotConfig;
 import org.firstinspires.ftc.teamcode.robot.operations.State;
 import org.firstinspires.ftc.teamcode.robot.operations.WaitOperation;
 
@@ -23,7 +23,23 @@ public abstract class AutonomousHelper extends OpMode {
     protected Robot robot;
     protected Field field;
 
-    protected WaitOperation delayedStart = null;
+    private final Pose redLeftStartingPose = new Pose(
+            (6*Field.TILE_WIDTH - RobotConfig.ROBOT_CENTER_FROM_BACK) / Field.MM_PER_INCH,
+            (3*Field.TILE_WIDTH-RobotConfig.ROBOT_WIDTH/2) / Field.MM_PER_INCH,
+            Math.toRadians(180));
+    private final Pose redRightStartingPose = new Pose(
+            (6*Field.TILE_WIDTH- RobotConfig.ROBOT_CENTER_FROM_BACK) / Field.MM_PER_INCH,
+            (3*Field.TILE_WIDTH+RobotConfig.ROBOT_WIDTH/2)  / Field.MM_PER_INCH,
+            Math.toRadians(180));
+    private final Pose blueLeftStartingPose = new Pose(
+            (RobotConfig.ROBOT_CENTER_FROM_BACK) / Field.MM_PER_INCH,
+            (3*Field.TILE_WIDTH+RobotConfig.ROBOT_WIDTH/2) / Field.MM_PER_INCH,
+            Math.toRadians(0));
+    private final Pose blueRightStartingPose = new Pose(
+            (RobotConfig.ROBOT_CENTER_FROM_BACK) / Field.MM_PER_INCH,
+            (3*Field.TILE_WIDTH-RobotConfig.ROBOT_WIDTH/2) / Field.MM_PER_INCH,
+            Math.toRadians(180));
+    protected static WaitOperation delayedStart = null;
     ArrayList<State> states = new ArrayList<>();
 
     Date initStartTime;
@@ -35,37 +51,54 @@ public abstract class AutonomousHelper extends OpMode {
      * Code to run ONCE when the driver hits INIT
      */
     public void init(Telemetry telemetry, Alliance.Color alliance, Field.StartingPosition startingPosition) {
-        try {
-            initStartTime = new Date();
-            this.match = Match.getNewInstance();
-            match.init();
-            Match.log("Match initialized, setting alliance to " + alliance
-                    + " and starting position to " + startingPosition);
-            match.setAlliance(alliance);
-            match.setStartingPosition(startingPosition);
-            field = match.getField();
+        initStartTime = new Date();
+        this.match = Match.getNewInstance();
+        match.init();
+        Match.log("Match initialized, setting alliance to " + alliance
+                + " and starting position to " + startingPosition);
+        match.setAlliance(alliance);
+        match.setStartingPosition(startingPosition);
+        field = match.getField();
 
-            //initialize field for the alliance and starting position
-            field.init(alliance, startingPosition);
-            //get our robot and initialize it
-            this.robot = match.getRobot();
-            Match.log("Initializing robot");
-            this.robot.init(hardwareMap, telemetry, match);
+        //initialize field for the alliance and starting position
+        field.init(alliance, startingPosition);
+        //get our robot and initialize it
+        this.robot = match.getRobot();
+        Match.log("Initializing robot");
+        this.robot.init(hardwareMap, telemetry, match);
+        this.robot.getFollower().setPose(getStartingPose(alliance, startingPosition));
 
-            //set the starting delay to be 0 milliseconds and add this operation in the first state
-            this.delayedStart = new WaitOperation(0, "Delay start");
-            State state = new State("Initial wait");
-            state.addPrimaryOperation(this.delayedStart);
-            states.add(state);
+        //set the starting delay to be 0 milliseconds and add this operation in the first state
+        delayedStart = new WaitOperation(0, "Delay start");
+        State state = new State("Initial wait");
+        state.addPrimaryOperation(delayedStart);
+        states.add(state);
 
-            telemetry.update();
-            initErrorHappened = false;
-        }
-        catch (Throwable e) {
-            RobotLog.logStackTrace(e);
-            initError = e.toString();
-        }
+        telemetry.update();
+        initErrorHappened = false;
     }
+
+    private Pose getStartingPose(Alliance.Color alliance, Field.StartingPosition startingPosition) {
+        Pose startingPose;
+        if (startingPosition == Field.StartingPosition.Right) {
+            if (alliance == Alliance.Color.RED) {
+                startingPose = redRightStartingPose;
+            }
+            else {
+                startingPose = blueRightStartingPose;
+            }
+        }
+        else {
+            if (alliance == Alliance.Color.RED) {
+                startingPose = redLeftStartingPose;
+            }
+            else {
+                startingPose = blueLeftStartingPose;
+            }
+        }
+        return startingPose;
+    }
+
     /*
      * Code to run repeatedly after the driver hits INIT, but before they hit PLAY
      */
@@ -125,6 +158,10 @@ public abstract class AutonomousHelper extends OpMode {
         }
         robot.handleArm(gamepad1, gamepad2);
         robot.handleDriveTrain(gamepad1);
+    }
+
+    public static long getStartDelay() {
+        return delayedStart.getTime();
     }
 
     @Override

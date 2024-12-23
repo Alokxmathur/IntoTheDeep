@@ -2,16 +2,15 @@ package org.firstinspires.ftc.teamcode.robot.components.vision;
 
 import android.graphics.Color;
 
-import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.SortOrder;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.teamcode.game.Field;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.ExposureControl;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.GainControl;
 import org.firstinspires.ftc.teamcode.robot.RobotConfig;
-import org.firstinspires.ftc.teamcode.robot.components.vision.detector.ObjectDetectionVisionProcessor;
-import org.firstinspires.ftc.teamcode.robot.components.vision.detector.ObjectDetector;
+import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import org.firstinspires.ftc.vision.opencv.ColorBlobLocatorProcessor;
@@ -21,14 +20,15 @@ import org.opencv.core.RotatedRect;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 public class SilverTitansVisionPortal {
-    org.firstinspires.ftc.vision.VisionPortal visionPortal;
+    VisionPortal visionPortal;
     AprilTagProcessor aprilTagProcessor;
     ColorBlobLocatorProcessor blueColorLocator = new ColorBlobLocatorProcessor.Builder()
             .setTargetColorRange(ColorRange.BLUE)         // use a predefined color match
             .setContourMode(ColorBlobLocatorProcessor.ContourMode.EXTERNAL_ONLY)    // exclude blobs inside blobs
-            .setRoi(ImageRegion.asUnityCenterCoordinates(-0.5, 0.5, 0.5, -0.5))  // search central 1/4 of camera view
+            .setRoi(ImageRegion.asUnityCenterCoordinates(-1, 1, 1, -1))  // search central 1/4 of camera view
             .setDrawContours(true)                        // Show contours on the Stream Preview
             .setBlurSize(5)                               // Smooth the transitions between different colors in image
             .setBoxFitColor(Color.RED)
@@ -36,7 +36,7 @@ public class SilverTitansVisionPortal {
     ColorBlobLocatorProcessor redColorLocator = new ColorBlobLocatorProcessor.Builder()
             .setTargetColorRange(ColorRange.RED)         // use a predefined color match
             .setContourMode(ColorBlobLocatorProcessor.ContourMode.EXTERNAL_ONLY)    // exclude blobs inside blobs
-            .setRoi(ImageRegion.asUnityCenterCoordinates(-0.5, 0.5, 0.5, -0.5))  // search central 1/4 of camera view
+            .setRoi(ImageRegion.asUnityCenterCoordinates(-1, 1, 1, -1))  // search central 1/4 of camera view
             .setDrawContours(true)                        // Show contours on the Stream Preview
             .setBlurSize(5)                               // Smooth the transitions between different colors in image
             .setBoxFitColor(Color.BLUE)
@@ -45,7 +45,7 @@ public class SilverTitansVisionPortal {
     ColorBlobLocatorProcessor yellowColorLocator = new ColorBlobLocatorProcessor.Builder()
             .setTargetColorRange(ColorRange.YELLOW)         // use a predefined color match
             .setContourMode(ColorBlobLocatorProcessor.ContourMode.EXTERNAL_ONLY)    // exclude blobs inside blobs
-            .setRoi(ImageRegion.asUnityCenterCoordinates(-0.5, 0.5, 0.5, -0.5))  // search central 1/4 of camera view
+            .setRoi(ImageRegion.asUnityCenterCoordinates(-1, 1, 1, -1))  // search central 1/4 of camera view
             .setDrawContours(true)                        // Show contours on the Stream Preview
             .setBlurSize(5)                               // Smooth the transitions between different colors in image
             .setBoxFitColor(Color.WHITE)
@@ -60,13 +60,14 @@ public class SilverTitansVisionPortal {
         // Decimation = 3 ..  Detect 2" Tag from 4  feet away at 30 Frames Per Second
         // Decimation = 3 ..  Detect 5" Tag from 10 feet away at 30 Frames Per Second
         // Note: Decimation can be changed on-the-fly to adapt during a match.
-        aprilTagProcessor.setDecimation(2);
+        aprilTagProcessor.setDecimation(1);
 
-        visionPortal = new org.firstinspires.ftc.vision.VisionPortal.Builder()
+        visionPortal = new VisionPortal.Builder()
                 .setCamera(hardwareMap.get(WebcamName.class, RobotConfig.WEBCAM_ID))
-                .setCameraResolution(new android.util.Size(RobotConfig.X_PIXEL_COUNT, RobotConfig.Y_PIXEL_COUNT))
+                //.setCameraResolution(new android.util.Size(RobotConfig.X_PIXEL_COUNT, RobotConfig.Y_PIXEL_COUNT))
                 .addProcessors(aprilTagProcessor, blueColorLocator, redColorLocator, yellowColorLocator)
                 .build();
+        setManualExposure(6, 250);  // Use low exposure time to reduce motion blur
     }
     public String getStatus() {
         ColorBlobLocatorProcessor.Blob redBlob = getLargestBlob(redColorLocator);
@@ -96,7 +97,7 @@ public class SilverTitansVisionPortal {
         if (blob != null) {
             RotatedRect box = blob.getBoxFit();
             return String.format(Locale.getDefault(), "@%d,%d of area:%d",
-                    box.center.x, box.center.y, box.size.area());
+                    (int)box.center.x, (int)box.center.y, (int)box.size.area());
         }
         else {
             return "not seeing";
@@ -128,7 +129,12 @@ public class SilverTitansVisionPortal {
          */
         ColorBlobLocatorProcessor.Util.filterByArea(100, 20000, blobs);  // filter out very small blobs.
         ColorBlobLocatorProcessor.Util.sortByArea(SortOrder.DESCENDING, blobs);
-        return blobs.get(0);
+        if (blobs.size() > 0) {
+            return blobs.get(0);
+        }
+        else {
+            return null;
+        }
     }
     /**
      * Add telemetry about AprilTag detections.
@@ -154,5 +160,50 @@ public class SilverTitansVisionPortal {
 
     public List<AprilTagDetection>  getAprilTags() {
         return this.aprilTagProcessor.getDetections();
+    }
+    /*
+ Manually set the camera gain and exposure.
+ This can only be called AFTER calling initAprilTag(), and only works for Webcams;
+*/
+    private void    setManualExposure(int exposureMS, int gain) {
+        // Wait for the camera to be open, then use the controls
+
+        if (visionPortal == null) {
+            return;
+        }
+
+        // Make sure camera is streaming before we try to set the exposure controls
+        if (visionPortal.getCameraState() != VisionPortal.CameraState.STREAMING) {
+            while (visionPortal.getCameraState() != VisionPortal.CameraState.STREAMING) {
+                try {
+                    Thread.sleep(20);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+
+            ExposureControl exposureControl = visionPortal.getCameraControl(ExposureControl.class);
+            if (exposureControl.getMode() != ExposureControl.Mode.Manual) {
+                exposureControl.setMode(ExposureControl.Mode.Manual);
+                try {
+                    Thread.sleep(20);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            exposureControl.setExposure((long)exposureMS, TimeUnit.MILLISECONDS);
+            try {
+                Thread.sleep(20);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            GainControl gainControl = visionPortal.getCameraControl(GainControl.class);
+            gainControl.setGain(gain);
+        try {
+            Thread.sleep(20);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.robot.operations;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.game.Field;
+import org.firstinspires.ftc.teamcode.game.Match;
 import org.firstinspires.ftc.teamcode.robot.components.drivetrain.DriveTrain;
 
 import java.util.Date;
@@ -21,10 +22,9 @@ public class StrafeLeftForDistanceWithHeadingOperation extends DriveTrainOperati
      * @param distance - in mm
      * @param heading - in radians
      * @param speed
-     * @param driveTrain
      * @param title
      */
-    public StrafeLeftForDistanceWithHeadingOperation(double distance, double heading, double speed, DriveTrain driveTrain, String title) {
+    public StrafeLeftForDistanceWithHeadingOperation(double distance, double heading, double speed, String title) {
         super();
         this.distance = distance;
         this.heading = heading;
@@ -33,8 +33,9 @@ public class StrafeLeftForDistanceWithHeadingOperation extends DriveTrainOperati
     }
 
     public String toString() {
-        return String.format(Locale.getDefault(), "StrafeLeft: %.2f\"@%.2f --%s",
+        return String.format(Locale.getDefault(), "StrafeLeft: %.2f\",H:%.2f,@%.2f --%s",
                 this.distance/ Field.MM_PER_INCH,
+                Math.toDegrees(this.heading),
                 this.speed,
                 this.title);
     }
@@ -45,8 +46,11 @@ public class StrafeLeftForDistanceWithHeadingOperation extends DriveTrainOperati
             return true;
         }
         else {
+            double currentBearing =
+                    Math.toDegrees(Match.getInstance().getRobot().getPose().getHeading());
             // adjust relative SPEED based on desiredHeading error.
-            double bearingError = AngleUnit.normalizeDegrees(Math.toDegrees(heading) - Math.toDegrees(driveTrain.getExternalHeading()));
+            double bearingError = AngleUnit.normalizeDegrees(Math.toDegrees(heading)
+                    - currentBearing);
             double steer = DriveTrain.getSteer(bearingError, DriveTrain.P_DRIVE_COEFFICIENT);
 
             // if driving in reverse, the motor correction also needs to be reversed
@@ -62,11 +66,13 @@ public class StrafeLeftForDistanceWithHeadingOperation extends DriveTrainOperati
                 leftSpeed /= max;
                 rightSpeed /= max;
             }
+            Match.log(String.format(Locale.getDefault(), "%.2f vs %.2f, Bearing error: %.2f, Setting power LF:%.2f,LR:%.2f,RF:%.2f,RR%.2f",
+                    Math.toDegrees(heading), currentBearing, bearingError, leftSpeed, leftSpeed, rightSpeed, rightSpeed));
 
             driveTrain.setLeftFrontPower(leftSpeed);
-            driveTrain.setLeftRearPower(leftSpeed);
+            driveTrain.setLeftBackPower(leftSpeed);
             driveTrain.setRightFrontPower(rightSpeed);
-            driveTrain.setRightRearPower(rightSpeed);
+            driveTrain.setRightBackPower(rightSpeed);
             //Match.log(String.format(Locale.getDefault(), "Left speed: %.2f, right: %.2f", leftSpeed, rightSpeed));
 
             return false;

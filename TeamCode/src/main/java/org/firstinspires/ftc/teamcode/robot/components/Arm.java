@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.robot.components;
 
+import com.qualcomm.robotcore.hardware.ColorRangeSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -10,19 +11,14 @@ import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.teamcode.game.Match;
 import org.firstinspires.ftc.teamcode.robot.RobotConfig;
 import org.firstinspires.ftc.teamcode.robot.operations.ArmOperation;
 
 import java.util.Locale;
 
 public class Arm {
-    public static final int CORE_HEX_MOTOR_COUNT_PER_REV = 288;
-    public static final int INOUT_GEAR_RATIO = 3;
-
     DcMotorEx slide, shoulder;
-
-    NormalizedColorSensor colorSensor;
-    DistanceSensor distanceSensor;
 
     Servo claw;
 
@@ -45,9 +41,6 @@ public class Arm {
 
         this.claw = hardwareMap.get(Servo.class, RobotConfig.CLAW);
 
-        colorSensor = hardwareMap.get(NormalizedColorSensor.class, RobotConfig.COLOR_SENSOR);
-        distanceSensor = hardwareMap.get(DistanceSensor.class, RobotConfig.COLOR_SENSOR);
-
         ensureMotorDirections();
         assumeInitialPosition();
     }
@@ -55,10 +48,11 @@ public class Arm {
 
     public void ensureMotorDirections() {
         this.slide.setDirection(DcMotorSimple.Direction.REVERSE);
-        this.shoulder.setDirection(DcMotorSimple.Direction.REVERSE);
+        this.shoulder.setDirection(DcMotorSimple.Direction.FORWARD);
     }
 
     public void assumeInitialPosition() {
+        //Match.log("Setting shoulder to " + RobotConfig.ARM_STARTING_POSITION.getShoulder());
         //setPositions(RobotConfig.ARM_STARTING_POSITION);
     }
 
@@ -143,7 +137,7 @@ public class Arm {
      */
     public void setShoulderPower(double power) {
         this.shoulder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        this.shoulder.setPower(power * RobotConfig.MAX_WRIST_POWER);
+        this.shoulder.setPower(power * RobotConfig.MAX_SHOULDER_POWER);
         elbowRetained = false;
     }
 
@@ -162,7 +156,7 @@ public class Arm {
     }
 
     public boolean shoulderIsWithinRange() {
-        return Math.abs(shoulder.getTargetPosition() - shoulder.getCurrentPosition()) <= RobotConfig.ACCEPTABLE_WRIST_ERROR;
+        return Math.abs(shoulder.getTargetPosition() - shoulder.getCurrentPosition()) <= RobotConfig.ACCEPTABLE_SHOULDER_ERROR;
     }
 
 
@@ -177,13 +171,11 @@ public class Arm {
      * @return
      */
     public String getStatus() {
-        NormalizedRGBA colors = colorSensor.getNormalizedColors();
         return String.format(Locale.getDefault(),
-                "Slide:%d->%d@%.2f, Shoulder:%d->%d@%.2f, Claw:%.2f, Color:%.3f,%.3f,%.3f, Distance:%.2f",
+                "Slide:%d->%d@%.2f, Shoulder:%d->%d@%.2f, Claw:%.2f",
                 slide.getCurrentPosition(), slide.getTargetPosition(), slide.getPower(),
                 shoulder.getCurrentPosition(), shoulder.getTargetPosition(), shoulder.getPower(),
-                claw.getPosition(), colors.red, colors.blue, colors.green,
-                distanceSensor.getDistance(DistanceUnit.MM));
+                claw.getPosition());
     }
 
     public void clawReleasePosition() {
@@ -200,14 +192,5 @@ public class Arm {
 
     public void decrementReleaserPosition() {
         this.claw.setPosition(this.claw.getPosition() - RobotConfig.SERVO_INCREMENT);
-    }
-
-    /**
-     * Get the distance the distance sensor is seeing
-     * @return
-     */
-
-    public double getDistance() {
-        return distanceSensor.getDistance(DistanceUnit.MM);
     }
 }

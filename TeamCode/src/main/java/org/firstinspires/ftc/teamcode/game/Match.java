@@ -3,16 +3,19 @@ package org.firstinspires.ftc.teamcode.game;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
-import com.acmerobotics.roadrunner.geometry.Pose2d;
+import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
 import com.qualcomm.robotcore.util.RobotLog;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.opmodes.autonomous.AutonomousHelper;
+import org.firstinspires.ftc.teamcode.pedroPathing.localization.Pose;
 import org.firstinspires.ftc.teamcode.robot.Robot;
 import org.firstinspires.ftc.teamcode.robot.RobotConfig;
 
 import java.util.Date;
+import java.util.Locale;
 
 /**
  * Created by Silver Titans on 9/19/17. This is Cameron's comment
@@ -34,8 +37,6 @@ public class Match {
     private Alliance.Color alliance;
     private Field.StartingPosition startingPosition;
     private String trajectoryError = "";
-
-    private long delayedStart;
 
     synchronized public static Match getNewInstance() {
         match = new Match();
@@ -105,11 +106,13 @@ public class Match {
     public void updateTelemetry(Telemetry telemetry, String status) {
 
         if (robot != null && field != null) {
-            SparkFunOTOS.Pose2D pose2D = robot.getPose();
+            Pose pose = robot.getPose();
             // Send telemetry message to signify robot context;
             telemetry.addData("State", status);
             telemetry.addData("Delayed Start", getDelayedStart() + "milliseconds");
-            telemetry.addData("Position", "" + pose2D.x + "," + pose2D.y + "@" + pose2D.h);
+            telemetry.addData("Position",
+                    pose.toString());
+
             telemetry.addData("Drive", robot.getDriveTrain().getStatus());
             telemetry.addData("Arm", robot.getArmStatus());
             telemetry.addData("Intake", robot.getIntakeStatus());
@@ -144,14 +147,14 @@ public class Match {
         TelemetryPacket packet = new TelemetryPacket();
         Canvas field = packet.fieldOverlay();
 
-        SparkFunOTOS.Pose2D pose2d = robot.getPose();
-        if (pose2d == null) {
+        Pose pose = robot.getPose();
+        if (pose == null) {
             Match.log("Could not get pose");
             return;
         }
-        field.strokeCircle(pose2d.x, pose2d.y, .2);
+        field.strokeCircle(pose.getX(), pose.getY(), .2);
 
-        double rotation = pose2d.h;
+        double rotation = pose.getHeading();
         double sin = Math.sin(rotation);
         double cos = Math.cos(rotation);
 
@@ -166,20 +169,20 @@ public class Match {
         double y4 = -y2;
 
         //add the robot's X coordinate to all X
-        x1 += pose2d.x;
-        x2 += pose2d.x;
-        x3 += pose2d.x;
-        x4 += pose2d.x;
+        x1 += pose.getX();
+        x2 += pose.getX();
+        x3 += pose.getX();
+        x4 += pose.getX();
         //add the robot's Y coordinate to all Y
-        y1 += pose2d.y;
-        y2 += pose2d.y;
-        y3 += pose2d.y;
-        y4 += pose2d.y;
+        y1 += pose.getY();
+        y2 += pose.getY();
+        y3 += pose.getY();
+        y4 += pose.getY();
 
 
         //the point in front of the robot to create the triangle to show direction
-        double px = (pose2d.x + (RobotConfig.ROBOT_LENGTH/2 + 100)*cos/Field.MM_PER_INCH);
-        double py = (pose2d.y + (RobotConfig.ROBOT_LENGTH/2 + 100)*sin/Field.MM_PER_INCH);
+        double px = (pose.getX() + (RobotConfig.ROBOT_LENGTH/2 + 100)*cos/Field.MM_PER_INCH);
+        double py = (pose.getY() + (RobotConfig.ROBOT_LENGTH/2 + 100)*sin/Field.MM_PER_INCH);
 
 
         //draw our rectangular robot
@@ -194,7 +197,10 @@ public class Match {
 
         packet.put("State", status);
         packet.put("Delayed Start", getDelayedStart() + "milliseconds");
-        packet.put("Position", robot.getPose());
+
+        packet.put("Position", String.format(Locale.getDefault(), "%.2f,%.2f@%.2f", pose.getX(),
+                pose.getY(), pose.getHeading()));
+
         packet.put("Drive", robot.getDriveTrain().getStatus());
         packet.put("LED", robot.getLEDStatus().toString());
         packet.put("TrajectoryErr", getTrajectoryError());
@@ -217,10 +223,7 @@ public class Match {
         this.robot.setPattern(pattern);
     }
 
-    public void setDelayedStart(long delay) {
-        this.delayedStart = delay;
-    }
     public long getDelayedStart() {
-        return this.delayedStart;
+        return AutonomousHelper.getStartDelay();
     }
 }

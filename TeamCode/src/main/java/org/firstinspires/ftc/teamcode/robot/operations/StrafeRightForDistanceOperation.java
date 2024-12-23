@@ -16,7 +16,7 @@ public class StrafeRightForDistanceOperation extends DriveTrainOperation{
     }
 
     public String toString() {
-        return String.format(Locale.getDefault(), "StrafeLeft: %.2f\"@%.2f --%s",
+        return String.format(Locale.getDefault(), "StrafeRight: %.2f\"@%.2f --%s",
                 this.distance/ Field.MM_PER_INCH,
                 this.speed,
                 this.title);

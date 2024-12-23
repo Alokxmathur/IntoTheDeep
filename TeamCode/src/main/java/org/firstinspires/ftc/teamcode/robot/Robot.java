@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.robot;
 
 import android.util.Log;
 
+import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
 import com.qualcomm.robotcore.hardware.Gamepad;
@@ -11,6 +12,8 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.game.Alliance;
 import org.firstinspires.ftc.teamcode.game.Field;
 import org.firstinspires.ftc.teamcode.game.Match;
+import org.firstinspires.ftc.teamcode.pedroPathing.follower.Follower;
+import org.firstinspires.ftc.teamcode.pedroPathing.localization.Pose;
 import org.firstinspires.ftc.teamcode.robot.components.Arm;
 import org.firstinspires.ftc.teamcode.robot.components.Intake;
 import org.firstinspires.ftc.teamcode.robot.components.LED;
@@ -87,11 +90,12 @@ public class Robot {
 
     //Components
     DriveTrain driveTrain;
+
+    Follower follower;
     LED led;
     Arm arm;
     Intake intake;
     SilverTitansVisionPortal visionPortal;
-    OTOS otos;
 
     //Our sensors etc.
 
@@ -142,6 +146,8 @@ public class Robot {
         telemetry.addData("Status", "Initializing drive train, please wait");
         telemetry.update();
         this.driveTrain = new DriveTrain(hardwareMap);
+
+        follower = new Follower(hardwareMap);
     }
 
     public void initVision() {
@@ -151,8 +157,6 @@ public class Robot {
         telemetry.update();
         this.visionPortal = new SilverTitansVisionPortal();
         this.visionPortal.init(hardwareMap);
-        this.otos = new OTOS();
-        this.otos.init(hardwareMap);
     }
 
     /**
@@ -186,15 +190,6 @@ public class Robot {
 
     public void queueTertiaryOperation(Operation operation) {
         this.operationThreadTertiary.queueUpOperation(operation);
-    }
-
-    /**
-     * Returns the current heading of the robot in radians
-     *
-     * @return the heading in radians
-     */
-    public double getCurrentTheta() {
-        return 0;//AngleUnit.normalizeRadians(this.vslamCamera.getPoseEstimate().getHeading());
     }
 
     public boolean allOperationsCompleted() {
@@ -295,7 +290,7 @@ public class Robot {
     public void handleArm(Gamepad gamePad1, Gamepad gamePad2) {
 
         //If both gamePad2 left and right trigger are pressed, stop inout motor
-        if (gamePad2.left_trigger > .2 && gamePad2.right_trigger > .2) {
+        if (gamePad2.left_bumper || gamePad2.right_bumper) {
             intake.abstain();
         }
         //If gamePad2 right trigger is pressed, start consuming samples
@@ -313,7 +308,7 @@ public class Robot {
                 queueSecondaryOperation(new IntakeOperation(IntakeOperation.Type.Eat, "Start intake"));
             }
             if (gamePad2.b) {
-                queueSecondaryOperation(new ArmOperation(ArmOperation.Type.Lower_Basket, "Lower basket position"));
+                queueSecondaryOperation(new ArmOperation(ArmOperation.Type.High_Chamber, "High chamber position"));
             }
             if (gamePad2.y) {
                 queueSecondaryOperation(new ArmOperation(ArmOperation.Type.Higher_Basket, "Higher basket position"));
@@ -361,32 +356,19 @@ public class Robot {
                 arm.decrementReleaserPosition();
             }
             if (gamePad2.dpad_left) {
-                arm.clawRetainPosition();
+                arm.clawReleasePosition();
             }
             if (gamePad2.dpad_right) {
-                arm.clawReleasePosition();
+                arm.clawRetainPosition();
             }
             if(gamePad2.x) {
                 //reset
-            }
-            /**
-             * If the intake is eating and the distance sensor sees an object, stop eating and abstain
-             */
-            if (intake.isEating() && arm.getDistance() < 100) {
-                intake.abstain();
-            }
-            /**
-             * If the intake is expelling and the distance sensor does not see an object, stop expelling and abstain
-             */
-            if (intake.isExpelling() && arm.getDistance() >= 150) {
-                intake.abstain();
             }
         }
     }
 
     public void reset() {
         if (this.driveTrain != null) {
-            this.driveTrain.ensureWheelDirection();
             this.driveTrain.reset();
         }
         if (this.arm != null) {
@@ -395,10 +377,10 @@ public class Robot {
         initVision();
     }
 
-    public SparkFunOTOS.Pose2D getPose() {
-        return this.otos.getPose();
+    public Pose getPose() {
+        follower.updatePose();
+        return follower.getPose();
     }
-
     public DriveTrain getDriveTrain() {
         return this.driveTrain;
     }
@@ -433,4 +415,7 @@ public class Robot {
         return this.led;
     }
 
+    public Follower getFollower() {
+        return follower;
+    }
 }
