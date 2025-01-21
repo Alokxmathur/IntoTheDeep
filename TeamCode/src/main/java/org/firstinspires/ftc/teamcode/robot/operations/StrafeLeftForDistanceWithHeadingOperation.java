@@ -43,6 +43,7 @@ public class StrafeLeftForDistanceWithHeadingOperation extends DriveTrainOperati
     public boolean isComplete() {
         if (driveTrain.driveTrainWithinRange()) {
             driveTrain.stop();
+            Match.log("Ending strafe left with heading at " + Field.poseToString(Match.getInstance().getRobot().getPose()));
             return true;
         }
         else {
@@ -89,6 +90,7 @@ public class StrafeLeftForDistanceWithHeadingOperation extends DriveTrainOperati
 
     @Override
     public void startOperation() {
+        Match.log("Starting strafe left with heading at " + Field.poseToString(Match.getInstance().getRobot().getPose()));
         driveTrain.handleOperation(this);
     }
 }

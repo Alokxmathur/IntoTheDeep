@@ -129,7 +129,7 @@ public class SilverTitansVisionPortal {
          */
         ColorBlobLocatorProcessor.Util.filterByArea(100, 20000, blobs);  // filter out very small blobs.
         ColorBlobLocatorProcessor.Util.sortByArea(SortOrder.DESCENDING, blobs);
-        if (blobs.size() > 0) {
+        if (!blobs.isEmpty()) {
             return blobs.get(0);
         }
         else {

@@ -2,29 +2,33 @@ package org.firstinspires.ftc.teamcode.robot.operations;
 
 import org.firstinspires.ftc.teamcode.game.Field;
 import org.firstinspires.ftc.teamcode.game.Match;
+import org.firstinspires.ftc.teamcode.opmodes.autonomous.AutonomousHelper;
+import org.firstinspires.ftc.teamcode.opmodes.autonomous.AutonomousV2;
 import org.firstinspires.ftc.teamcode.pedroPathing.follower.Follower;
 import org.firstinspires.ftc.teamcode.pedroPathing.localization.Pose;
-import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.Path;
+import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.BezierCurve;
+import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.BezierLine;
+import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.PathBuilder;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.PathChain;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.Point;
 
-public class FollowPathChain extends Operation {
+public class GoToPosition extends Operation {
     PathChain pathChain;
     Point endPoint;
-    Pose endPose;
     Follower follower;
 
+    Pose pose;
+
     double accuracy;
-    public FollowPathChain(PathChain pathChain, double accuracy, String title) {
-        this.pathChain = pathChain;
-        this.endPoint = pathChain.getPath(pathChain.size()-1).getPoint(1);
+    public GoToPosition(Pose pose, double accuracy, String title) {
+        this.pose = pose;
         this.accuracy = accuracy;
         this.follower = Match.getInstance().getRobot().getFollower();
         this.title = title;
     }
 
-    public FollowPathChain(PathChain pathChain, String title) {
-        this(pathChain, 1, title);
+    public GoToPosition(Pose pose, String title) {
+        this(pose, 1, title);
     }
 
     /**
@@ -36,27 +40,29 @@ public class FollowPathChain extends Operation {
         follower.update();
         Pose currentPose = follower.getPose();
         //consider completion when both x and y are withing 1 inch of the end point
-        int currentPathNumber = (int) follower.getCurrentPathNumber();
-        boolean complete = !follower.isBusy();
-        /*
-                currentPathNumber == (pathChain.size()-1) || currentPathNumber == 0
-                && Math.abs(currentPose.getX() - endPoint.getX()) <= accuracy
+        boolean complete = Math.abs(currentPose.getX() - endPoint.getX()) <= accuracy
                 && Math.abs(currentPose.getY() - endPoint.getY()) <= accuracy;
-
-         */
         if (complete) {
-            Match.log("Completed " + title + " at path: " + currentPathNumber + " of " + pathChain.size()
-                    + " at location: " + Field.poseToString(currentPose));
-            Match.log("Desired point " + Field.pointToString(endPoint));
-        }
-        else {
-            Match.log("Continuing " + title + " at path " + currentPathNumber + " at " + Field.poseToString(currentPose));
-        }
+            Match.log("Completed " + title + " at " + currentPose.toString());
+        };
         return complete;
     }
 
     @Override
     public void startOperation() {
+        Pose currentPose = Match.getInstance().getRobot().getPose();
+        this.pathChain = new PathBuilder()
+                .addPath(
+                        new BezierLine(
+                                new Point(currentPose.getX(),
+                                        currentPose.getY(),
+                                        Point.CARTESIAN),
+                                new Point(90, 114, Point.CARTESIAN)
+                        )
+                )
+                .setLinearHeadingInterpolation(currentPose.getHeading(), pose.getHeading())
+        .build();
+        this.endPoint = pathChain.getPath(pathChain.size()-1).getPoint(1);
         follower.followPath(pathChain, true);
     }
 

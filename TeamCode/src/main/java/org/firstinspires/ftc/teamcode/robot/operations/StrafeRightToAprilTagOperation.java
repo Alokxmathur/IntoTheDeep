@@ -20,7 +20,7 @@ public class StrafeRightToAprilTagOperation extends DriveTrainOperation{
 
     public boolean isComplete() {
         List<AprilTagDetection> aprilTagsSeen = Match.getInstance().getRobot().getVisionPortal().getAprilTags();
-        if (aprilTagsSeen.size() > 0) {
+        if (!aprilTagsSeen.isEmpty()) {
              driveTrain.stop();
             return true;
         }

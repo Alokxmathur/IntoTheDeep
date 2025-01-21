@@ -44,6 +44,7 @@ public class DriveInDirectionOperation extends DriveForDistanceOperation {
         double currentBearing =
                 Math.toDegrees(Match.getInstance().getRobot().getPose().getHeading());
         if (driveTrain.driveTrainWithinRange()) {
+            Match.log("Completed operation at " + Field.poseToString(Match.getInstance().getRobot().getPose()));
             return true;
         } else {
             // adjust relative speed based on heading error.

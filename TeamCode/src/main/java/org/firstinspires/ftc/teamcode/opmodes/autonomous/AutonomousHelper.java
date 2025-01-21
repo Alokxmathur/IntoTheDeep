@@ -7,8 +7,15 @@ import org.firstinspires.ftc.teamcode.game.Alliance;
 import org.firstinspires.ftc.teamcode.game.Field;
 import org.firstinspires.ftc.teamcode.game.Match;
 import org.firstinspires.ftc.teamcode.pedroPathing.localization.Pose;
+import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.BezierCurve;
+import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.BezierLine;
+import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.PathBuilder;
+import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.PathChain;
+import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.Point;
 import org.firstinspires.ftc.teamcode.robot.Robot;
 import org.firstinspires.ftc.teamcode.robot.RobotConfig;
+import org.firstinspires.ftc.teamcode.robot.components.Arm;
+import org.firstinspires.ftc.teamcode.robot.operations.ArmOperation;
 import org.firstinspires.ftc.teamcode.robot.operations.State;
 import org.firstinspires.ftc.teamcode.robot.operations.WaitOperation;
 
@@ -23,22 +30,20 @@ public abstract class AutonomousHelper extends OpMode {
     protected Robot robot;
     protected Field field;
 
-    private final Pose redLeftStartingPose = new Pose(
+    public static final Pose redLeftStartingPose = new Pose(
             (6*Field.TILE_WIDTH - RobotConfig.ROBOT_CENTER_FROM_BACK) / Field.MM_PER_INCH,
             (3*Field.TILE_WIDTH-RobotConfig.ROBOT_WIDTH/2) / Field.MM_PER_INCH,
             Math.toRadians(180));
-    private final Pose redRightStartingPose = new Pose(
-            (6*Field.TILE_WIDTH- RobotConfig.ROBOT_CENTER_FROM_BACK) / Field.MM_PER_INCH,
-            (3*Field.TILE_WIDTH+RobotConfig.ROBOT_WIDTH/2)  / Field.MM_PER_INCH,
-            Math.toRadians(180));
-    private final Pose blueLeftStartingPose = new Pose(
+    public static final Pose redRightStartingPose = new Pose(
+            (6*Field.TILE_WIDTH - RobotConfig.ROBOT_CENTER_FROM_FRONT) / Field.MM_PER_INCH,
+            (3*Field.TILE_WIDTH+RobotConfig.ROBOT_WIDTH/2)  / Field.MM_PER_INCH + 3,
+            Math.toRadians(0));
+    public static final Pose blueLeftStartingPose = new Pose(
             (RobotConfig.ROBOT_CENTER_FROM_BACK) / Field.MM_PER_INCH,
             (3*Field.TILE_WIDTH+RobotConfig.ROBOT_WIDTH/2) / Field.MM_PER_INCH,
             Math.toRadians(0));
-    private final Pose blueRightStartingPose = new Pose(
-            (RobotConfig.ROBOT_CENTER_FROM_BACK) / Field.MM_PER_INCH,
-            (3*Field.TILE_WIDTH-RobotConfig.ROBOT_WIDTH/2) / Field.MM_PER_INCH,
-            Math.toRadians(180));
+    public static final Pose blueRightStartingPose = redRightStartingPose;
+
     protected static WaitOperation delayedStart = null;
     ArrayList<State> states = new ArrayList<>();
 
@@ -66,7 +71,6 @@ public abstract class AutonomousHelper extends OpMode {
         this.robot = match.getRobot();
         Match.log("Initializing robot");
         this.robot.init(hardwareMap, telemetry, match);
-        this.robot.getFollower().setPose(getStartingPose(alliance, startingPosition));
 
         //set the starting delay to be 0 milliseconds and add this operation in the first state
         delayedStart = new WaitOperation(0, "Delay start");
@@ -104,10 +108,12 @@ public abstract class AutonomousHelper extends OpMode {
      */
     @Override
     public void init_loop() {
+        this.robot.getFollower().setPose(getStartingPose(Match.getInstance().getAlliance(),
+                Match.getInstance().getStartingPosition()));
+
         if (match.getAlliance() != Alliance.Color.NotSelected) {
-            if (Field.isNotInitialized()) {
-                telemetry.addData("State", "Trajectories initializing, please wait. " +
-                        (30 - (int) (new Date().getTime() - initStartTime.getTime()) / 1000));
+            if (!robot.isInitialized()) {
+                telemetry.addData("State", "Robot is initializing");
             }
             else {
                 //increase or decrease delay in starting operations

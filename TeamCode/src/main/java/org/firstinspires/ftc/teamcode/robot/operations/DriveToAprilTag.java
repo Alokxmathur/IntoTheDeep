@@ -77,9 +77,10 @@ public class DriveToAprilTag extends Operation {
             We consider we have arrived if we are within 1 inch of the desired distance,
             and within 2 degrees of facing the aprilTag
              */
-            if (rangeError < 1 ) {
+            if (Math.abs(rangeError) < 1 && Math.abs(headingError) < 1) {
                 arrived = true;
             }
+
             /*
             Match.log(String.format(Locale.getDefault(),
                     "Drive to april tag: yError:%.2f, heading error: %.2f," +
@@ -88,6 +89,8 @@ public class DriveToAprilTag extends Operation {
                     drive, strafe, turn));
 
              */
+
+
         }
         else {
             //if we are not seeing the tag, we say we have arrived as there is no chance we are going to see it
@@ -98,9 +101,9 @@ public class DriveToAprilTag extends Operation {
             driveTrain.stop();
             Match.log(String.format(Locale.getDefault(),
                     "Drive to april tag completed: yError:%.2f, heading error: %.2f," +
-                            "drive: %.2f, strafe: %.2f, turn: %.2f",
+                            "drive: %.2f, strafe: %.2f, turn: %.2f at %s",
                     rangeError, headingError,
-                    drive, strafe, turn));
+                    drive, strafe, turn, Field.poseToString(Match.getInstance().getRobot().getPose())));
         }
         else {
             moveRobot(drive, strafe, turn, driveTrain);

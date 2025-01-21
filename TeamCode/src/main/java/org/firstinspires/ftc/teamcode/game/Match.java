@@ -6,6 +6,7 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
+import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.util.RobotLog;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -106,20 +107,30 @@ public class Match {
     public void updateTelemetry(Telemetry telemetry, String status) {
 
         if (robot != null && field != null) {
-            Pose pose = robot.getPose();
             // Send telemetry message to signify robot context;
             telemetry.addData("State", status);
             telemetry.addData("Delayed Start", getDelayedStart() + "milliseconds");
+            Pose pose = robot.getPose();
             telemetry.addData("Position",
-                    pose.toString());
+                    String.format(Locale.getDefault(), "X:%.2f,Y:%.2f:H:%.2f",
+                            pose.getX(),
+                            pose.getY(),
+                            Math.toDegrees(pose.getHeading())));
+            telemetry.addData("Arm", robot.getArmStatus());
 
             telemetry.addData("Drive", robot.getDriveTrain().getStatus());
-            telemetry.addData("Arm", robot.getArmStatus());
-            telemetry.addData("Intake", robot.getIntakeStatus());
+
+            /*
             telemetry.addData("Camera", robot.getVisionPortal().getStatus());
+            */
+            NormalizedRGBA colors = robot.getColors();
+            telemetry.addLine()
+                    .addData("Red", "%.3f", colors.red)
+                    .addData("Green", "%.3f", colors.green)
+                    .addData("Blue", "%.3f", colors.blue);
             robot.getVisionPortal().telemetryAprilTag(telemetry);
 
-            updateDashBoard(status);
+            //updateDashBoard(status);
         }
         else {
             telemetry.addData("Context", "Robot not initialized");
@@ -198,8 +209,7 @@ public class Match {
         packet.put("State", status);
         packet.put("Delayed Start", getDelayedStart() + "milliseconds");
 
-        packet.put("Position", String.format(Locale.getDefault(), "%.2f,%.2f@%.2f", pose.getX(),
-                pose.getY(), pose.getHeading()));
+        packet.put("Position", pose.toString());
 
         packet.put("Drive", robot.getDriveTrain().getStatus());
         packet.put("LED", robot.getLEDStatus().toString());

@@ -5,6 +5,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.teamcode.game.Match;
 import org.firstinspires.ftc.teamcode.pedroPathing.localization.Localizer;
 import org.firstinspires.ftc.teamcode.pedroPathing.localization.Pose;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.MathFunctions;
@@ -83,10 +84,10 @@ public class OTOSLocalizer extends Localizer {
         // For the OTOS, left/right is the y axis and forward/backward is the x axis, with left being
         // positive y and forward being positive x. PI/2 radians is facing forward, and clockwise
         // rotation is negative rotation.
-        otos.setOffset(new SparkFunOTOS.Pose2D(5.5625,-0.375, Math.toRadians(270)));
+        otos.setOffset(new SparkFunOTOS.Pose2D(5.6875, 4.875, Math.toRadians(-90)));
 
         // TODO: replace these with your tuned multipliers
-        otos.setLinearScalar(96.0/94.0);
+        otos.setLinearScalar(40.0/39);
         otos.setAngularScalar(3600.0/3606.0);
 
         otos.calibrateImu();
@@ -111,8 +112,8 @@ public class OTOSLocalizer extends Localizer {
     public Pose getPose() {
         SparkFunOTOS.Pose2D rawPose = otos.getPosition();
         Pose pose = new Pose(rawPose.x, rawPose.y, rawPose.h);
-
-        return MathFunctions.addPoses(startPose, MathFunctions.rotatePose(pose, startPose.getHeading(), false));
+        return MathFunctions.addPoses(startPose, new Pose(pose.getX(), pose.getY(), pose.getHeading()));
+        //return MathFunctions.addPoses(startPose, MathFunctions.rotatePose(pose, startPose.getHeading(), false));
     }
 
     /**

@@ -10,10 +10,10 @@ import java.util.Locale;
 public class DriveForTimeOperation extends DriveTrainOperation {
     private long time;
     private double robotRelativeHeading;
-    private double speed;
+    private double leftSpeed, rightSpeed;
 
-    public void setSpeed(double speed) {
-        this.speed = speed;
+    public void setLeftSpeed(double leftSpeed) {
+        this.leftSpeed = leftSpeed;
     }
 
     public long getTime() {
@@ -25,20 +25,21 @@ public class DriveForTimeOperation extends DriveTrainOperation {
      * @param time - the number of milliseconds
      * @param heading - the heading relative to the robot in radians
      *                This is not the field heading
-     * @param speed
+     * @param leftSpeed
+     * @param rightSpeed
      * @param title
      */
-    public DriveForTimeOperation(long time, double heading, double speed, String title) {
+    public DriveForTimeOperation(long time, double leftSpeed, double rightSpeed, String title) {
         super();
         this.time = time;
-        this.robotRelativeHeading = heading;
-        this.speed = speed;
+        this.leftSpeed = leftSpeed;
+        this.rightSpeed = rightSpeed;
         this.title = title;
     }
 
     public String toString() {
-        return String.format(Locale.getDefault(), "DriveForTime: %d@%.2f --%s",
-                this.time, this.robotRelativeHeading,
+        return String.format(Locale.getDefault(), "DriveForTime: %d@Left:%.2f,Right:%.2f --%s",
+                this.time, this.leftSpeed, this.rightSpeed,
                 this.title);
     }
 
@@ -46,19 +47,16 @@ public class DriveForTimeOperation extends DriveTrainOperation {
         if (new Date().getTime() > (this.getStartTime().getTime() + getTime())) {
             driveTrain.stop();
             return true;
-        } else {
-            driveTrain.drive(this.robotRelativeHeading, this.getSpeed(), 0);
-            return false;
         }
-    }
-
-    public double getSpeed() {
-        return this.speed;
+        return false;
     }
 
     @Override
     public void startOperation() {
-
+        this.driveTrain.setLeftBackPower(leftSpeed);
+        this.driveTrain.setLeftFrontPower(leftSpeed);
+        this.driveTrain.setRightBackPower(rightSpeed);
+        this.driveTrain.setRightFrontPower(rightSpeed);
     }
 
 }
