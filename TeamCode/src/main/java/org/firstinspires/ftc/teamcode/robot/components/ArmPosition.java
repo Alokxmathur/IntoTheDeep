@@ -12,16 +12,20 @@ public class ArmPosition {
         return slide;
     }
 
-    int slide, shoulder;
+    int slide, shoulder, elbow;
     double claw;
 
-    public ArmPosition(int slide, int shoulder, double clawPosition) {
+    public ArmPosition(int slide, int shoulder, int elbow, double clawPosition) {
         this.slide = slide;
         this.shoulder = shoulder;
+        this.elbow = elbow;
         this.claw = clawPosition;
     }
 
     public int getShoulder() {
         return shoulder;
+    }
+    public int getElbow() {
+        return elbow;
     }
 }

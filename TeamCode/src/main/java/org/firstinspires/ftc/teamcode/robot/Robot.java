@@ -3,25 +3,34 @@ package org.firstinspires.ftc.teamcode.robot;
 import android.util.Log;
 
 import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
-import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.game.Alliance;
 import org.firstinspires.ftc.teamcode.game.Field;
 import org.firstinspires.ftc.teamcode.game.Match;
+import org.firstinspires.ftc.teamcode.pedroPathing.follower.Follower;
+import org.firstinspires.ftc.teamcode.pedroPathing.localization.Pose;
 import org.firstinspires.ftc.teamcode.robot.components.Arm;
-import org.firstinspires.ftc.teamcode.robot.components.Intake;
 import org.firstinspires.ftc.teamcode.robot.components.LED;
-import org.firstinspires.ftc.teamcode.robot.components.OTOS;
 import org.firstinspires.ftc.teamcode.robot.components.drivetrain.DriveTrain;
 import org.firstinspires.ftc.teamcode.robot.components.vision.SilverTitansVisionPortal;
 import org.firstinspires.ftc.teamcode.robot.operations.ArmOperation;
+import org.firstinspires.ftc.teamcode.robot.operations.DriveInDirectionOperation;
+import org.firstinspires.ftc.teamcode.robot.operations.DriveInDirectionUntilColor;
 import org.firstinspires.ftc.teamcode.robot.operations.DriveToAprilTag;
-import org.firstinspires.ftc.teamcode.robot.operations.IntakeOperation;
 import org.firstinspires.ftc.teamcode.robot.operations.Operation;
 import org.firstinspires.ftc.teamcode.robot.operations.OperationThread;
+import org.firstinspires.ftc.teamcode.robot.operations.StrafeLeftForDistanceOperation;
+import org.firstinspires.ftc.teamcode.robot.operations.StrafeRightToAprilTagOperation;
+import org.firstinspires.ftc.vision.opencv.ColorBlobLocatorProcessor;
+import org.opencv.core.RotatedRect;
+
+import java.util.Locale;
 
 /**
  * This class represents our robot.
@@ -87,11 +96,14 @@ public class Robot {
 
     //Components
     DriveTrain driveTrain;
+
+    Follower follower;
+    IMU imu;
     LED led;
     Arm arm;
-    Intake intake;
     SilverTitansVisionPortal visionPortal;
-    OTOS otos;
+
+    ColorSensor colorSensor;
 
     //Our sensors etc.
 
@@ -110,11 +122,13 @@ public class Robot {
         this.telemetry = telemetry;
         this.match = match;
 
+        initIMU(hardwareMap);
         //initialize our components
         initVision();
         initDriveTrain();
 
         this.led = new LED(hardwareMap);
+        this.colorSensor = new ColorSensor(hardwareMap);
         if (match.getAlliance() == Alliance.Color.RED) {
             this.led.setPattern(RevBlinkinLedDriver.BlinkinPattern.RED);
         }
@@ -123,7 +137,6 @@ public class Robot {
         }
 
         this.arm = new Arm(hardwareMap);
-        this.intake = new Intake(hardwareMap);
 
         telemetry.addData("Status", "Creating operations thread, please wait");
         telemetry.update();
@@ -137,11 +150,21 @@ public class Robot {
         operationThreadTertiary.start();
     }
 
+    private void initIMU(HardwareMap hardwareMap) {
+        this.imu = hardwareMap.get(IMU.class, "imu");
+        RevHubOrientationOnRobot.LogoFacingDirection logoDirection = RevHubOrientationOnRobot.LogoFacingDirection.DOWN;
+        RevHubOrientationOnRobot.UsbFacingDirection  usbDirection  = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
+        RevHubOrientationOnRobot orientationOnRobot = new RevHubOrientationOnRobot(logoDirection, usbDirection);
+        // Now initialize the IMU with this mounting orientation
+        // Note: if you choose two conflicting directions, this initialization will cause a code exception.
+        imu.initialize(new IMU.Parameters(orientationOnRobot));
+    }
+
     public void initDriveTrain() {
         //Create our drive train
-        telemetry.addData("Status", "Initializing drive train, please wait");
-        telemetry.update();
         this.driveTrain = new DriveTrain(hardwareMap);
+        follower = new Follower(hardwareMap);
+        follower.setMaxPower(.4);
     }
 
     public void initVision() {
@@ -151,8 +174,6 @@ public class Robot {
         telemetry.update();
         this.visionPortal = new SilverTitansVisionPortal();
         this.visionPortal.init(hardwareMap);
-        this.otos = new OTOS();
-        this.otos.init(hardwareMap);
     }
 
     /**
@@ -173,6 +194,9 @@ public class Robot {
         if (this.driveTrain != null) {
             this.driveTrain.stop();
         }
+        if (this.visionPortal != null) {
+            this.visionPortal.stop();
+        }
         Match.log(("Robot stopped"));
     }
 
@@ -186,15 +210,6 @@ public class Robot {
 
     public void queueTertiaryOperation(Operation operation) {
         this.operationThreadTertiary.queueUpOperation(operation);
-    }
-
-    /**
-     * Returns the current heading of the robot in radians
-     *
-     * @return the heading in radians
-     */
-    public double getCurrentTheta() {
-        return 0;//AngleUnit.normalizeRadians(this.vslamCamera.getPoseEstimate().getHeading());
     }
 
     public boolean allOperationsCompleted() {
@@ -225,6 +240,10 @@ public class Robot {
         return true;
     }
 
+    public NormalizedRGBA getColors() {
+        return this.colorSensor.getColors();
+    }
+
     /*
         gamePad 2 dpad up/down open/close claw incrementally
         gamePad 2 dpad left/right open/close claw totally
@@ -245,10 +264,8 @@ public class Robot {
      * If the left bumper is pressed, align robot 9 inches to the left of the april tag being seen
      * If the right bumper is pressed, align robot 9 inches to the right of the april tag being seen
      * If both bumpers are pressed, align robot 9 inches centered on the april tag being seen
-     *
      * If left or right or both bumpers are pressed robot is attempted to be 12 inches from the
      * april tag
-     *
      * If no bumpers are pressed, the left joystick y direction determines forward movement,
      * left joystick x direction determines strafing and the right joy stick x direction
      * determines rotation
@@ -257,30 +274,17 @@ public class Robot {
      */
     public void handleDriveTrain(Gamepad gamePad1) {
         if (this.primaryOperationsCompleted()) {
-            double left = 0;
-            if (gamePad1.left_bumper || gamePad1.right_bumper) {
-                //if both left and right bumpers are pressed align with the april tag
-                if (gamePad1.left_bumper && gamePad1.right_bumper) {
-                    left = 0;
-                }
-                //if only left bumper is pressed, align to the left of the april tag
-                else if (gamePad1.left_bumper) {
-                    left = 12;
-                }
-                //if only right bumper is pressed, align to the right tag of the tag
-                else {
-                    left = -12;
-                }
-                //align with april tag, staying 10 inches from it
-                DriveToAprilTag.driveToAprilTag(left,12*Field.MM_PER_INCH, driveTrain);
+            //if both left and right bumpers are pressed align with the april tag
+            if (gamePad1.left_bumper && gamePad1.right_bumper) {
+                DriveToAprilTag.driveToAprilTag(0,12*Field.MM_PER_INCH, driveTrain);
             }
             else {
                 //regular driving
-                double multiplier = gamePad1.right_trigger > 0.1 ? .6 : (gamePad1.left_trigger > 0.1 ? 1 : .3);
-                double x = Math.pow(gamePad1.left_stick_x, 7) * multiplier; // Get left joystick's x-axis value.
-                double y = -Math.pow(gamePad1.left_stick_y, 7) * multiplier; // Get left joystick's y-axis value.
+                double multiplier = gamePad1.right_trigger > 0.1 ? .75 : (gamePad1.left_trigger > 0.1 ? 1 : .5);
+                double x = Math.pow(gamePad1.left_stick_x, 5) * multiplier; // Get left joystick's x-axis value.
+                double y = -Math.pow(gamePad1.left_stick_y, 5) * multiplier; // Get left joystick's y-axis value.
 
-                double rotation = Math.pow(gamePad1.right_stick_x, 5) * multiplier; // Get right joystick's x-axis value for rotation
+                double rotation = Math.pow(gamePad1.right_stick_x, 3) * multiplier; // Get right joystick's x-axis value for rotation
 
                 this.driveTrain.drive(Math.atan2(x, y), Math.hypot(x, y), rotation);
             }
@@ -293,112 +297,154 @@ public class Robot {
      * @param gamePad2 - game pad 2
      */
     public void handleArm(Gamepad gamePad1, Gamepad gamePad2) {
-
-        //If both gamePad2 left and right trigger are pressed, stop inout motor
-        if (gamePad2.left_trigger > .2 && gamePad2.right_trigger > .2) {
-            intake.abstain();
-        }
-        //If gamePad2 right trigger is pressed, start consuming samples
-        else if (gamePad2.right_trigger > .2) {
-            intake.eat();
-        }
-        //If gamePad2 left trigger is pressed, start spitting out samples
-        else if (gamePad2.left_trigger > .2) {
-            intake.release();
-        }
-
-        if (secondaryOperationsCompleted()) {
+        if (primaryOperationsCompleted() && secondaryOperationsCompleted()) {
             if (gamePad2.a) {
-                queueSecondaryOperation(new ArmOperation(ArmOperation.Type.Intake, "Assume Intake"));
-                queueSecondaryOperation(new IntakeOperation(IntakeOperation.Type.Eat, "Start intake"));
+                queueSecondaryOperation(new ArmOperation(ArmOperation.Type.Hover, "Assume Hover"));
             }
             if (gamePad2.b) {
-                queueSecondaryOperation(new ArmOperation(ArmOperation.Type.Lower_Basket, "Lower basket position"));
+                if (gamePad2.left_trigger > .1) {
+                    queueSecondaryOperation(new ArmOperation(ArmOperation.Type.Intake, "Assume Intake"));
+                    queueSecondaryOperation(new ArmOperation(ArmOperation.Type.Hold, "Grab"));
+                    queueSecondaryOperation(new ArmOperation(ArmOperation.Type.Hover, "Assume Hover"));
+                }
+                else {
+                    queueSecondaryOperation(new ArmOperation(ArmOperation.Type.Intake, "Assume Intake"));
+                }
             }
             if (gamePad2.y) {
-                queueSecondaryOperation(new ArmOperation(ArmOperation.Type.Higher_Basket, "Higher basket position"));
-            }            /*
-            if (gamePad2.y) {
-                queueSecondaryOperation(new ArmOperation(ArmOperation.Type.Abstain, "Stop intake"));
-                queueSecondaryOperation(new ArmOperation(ArmOperation.Type.Deposit1, "Low deposit position"));
+                queueSecondaryOperation(new ArmOperation(ArmOperation.Type.High_Chamber, "High chamber position"));
             }
             if (gamePad2.x) {
-                queueSecondaryOperation(new ArmOperation(ArmOperation.Type.Abstain, "Stop intake"));
-                queueSecondaryOperation(new ArmOperation(ArmOperation.Type.Deposit2, "High deposit position"));
+                queueSecondaryOperation(new ArmOperation(ArmOperation.Type.Higher_Basket, "High basket position"));
             }
             if (gamePad1.a) {
-                queueSecondaryOperation(new ArmOperation(ArmOperation.Type.Abstain, "Stop intake"));
-                queueSecondaryOperation(new ArmOperation(ArmOperation.Type.AutoDeposit, "Auto Deposit pixels"));
+                queueSecondaryOperation(new ArmOperation(ArmOperation.Type.Specimen_Intake, "Specimen intake position"));
             }
             if (gamePad1.b) {
-                queueSecondaryOperation(new ArmOperation(ArmOperation.Type.PreHang, "Pre-hang position"));
+                autoGrabSample(gamePad1, Match.getInstance().getAlliance() == Alliance.Color.RED ?
+                        visionPortal.getRedObject() : visionPortal.getBlueObject());
             }
             if (gamePad1.y) {
-                queueSecondaryOperation(new ArmOperation(ArmOperation.Type.Hang1, "Hang 1"));
-                queueSecondaryOperation(new ArmOperation(ArmOperation.Type.Hang2, "Hang 2"));
+                autoGrabSample(gamePad1, visionPortal.getYellowObject());
             }
-             */
-
-            //handle slide movement
+            if (gamePad1.right_bumper) {
+                queuePrimaryOperation(new DriveInDirectionUntilColor(16*Field.MM_PER_INCH, 0, .15, "Reach for specimen"));
+                queuePrimaryOperation(new ArmOperation(ArmOperation.Type.Hold, "Grab"));
+            }
+            if (gamePad1.dpad_left) {
+                queueSecondaryOperation(new ArmOperation(ArmOperation.Type.High_Chamber, "High Chamber position"));
+                queuePrimaryOperation(new StrafeRightToAprilTagOperation(0, "Strafe to reach submersible"));
+                queuePrimaryOperation(new DriveInDirectionOperation(-14*Field.MM_PER_INCH, 0, RobotConfig.CAUTIOUS_SPEED, "Go back to submersible"));
+                queuePrimaryOperation(new ArmOperation(ArmOperation.Type.High_Chamber_Deposit, "Deposit second specimen"));
+                queuePrimaryOperation(new ArmOperation(ArmOperation.Type.Release, "Release specimen"));
+            }
+            if (gamePad1.dpad_right) {
+                queuePrimaryOperation(new StrafeRightToAprilTagOperation(0, "Strafe to april tag"));
+            }
+            if (gamePad1.dpad_up) {
+                ArmOperation armOperation = new ArmOperation(ArmOperation.Type.Lower, "Lower arm");
+                armOperation.setLowerBy(1.0);
+                queueSecondaryOperation(armOperation);
+            }
+            if (gamePad1.dpad_down) {
+                ArmOperation armOperation = new ArmOperation(ArmOperation.Type.Lower, "Raise arm");
+                armOperation.setLowerBy(-1.0);
+                queueSecondaryOperation(armOperation);
+            }
+            if (Math.abs(gamePad2.right_stick_y) > 0.1) {
+                //If gamePad2 left or right bumper is pressed, make right_stick work to manage elbow
+                if (gamePad2.left_bumper || gamePad2.right_bumper) {
+                    //handle elbow movement
+                    this.arm.setElbowPower(-gamePad2.right_stick_y);
+                    this.arm.retainShoulder();
+                } else {
+                    this.arm.setShoulderPower(Math.pow(gamePad2.right_stick_y, 3));
+                    this.arm.retainElbow();
+                }
+            }
+            else {
+                this.arm.retainElbow();
+                this.arm.retainShoulder();
+            }
             if (Math.abs(gamePad2.left_stick_y) > 0.1) {
-                this.arm.setSlidePower(-gamePad2.left_stick_y);
-            } else {
+                    this.arm.setSlidePower(-gamePad2.left_stick_y);
+            }
+            else {
                 this.arm.retainSlide();
             }
-
-            //handle arm rotation
-            if (Math.abs(gamePad2.right_stick_y) > 0.1) {
-                this.arm.setShoulderPower(-gamePad2.right_stick_y);
-            } else {
-                this.arm.retainShoulder();
+            if (gamePad2.right_stick_x > 0.1) {
+                this.arm.decrementWristPosition();
+            }
+            else if (gamePad2.right_stick_x < -0.1) {
+                this.arm.incrementWristPosition();
             }
 
             //handle releaser
             if (gamePad2.dpad_up) {
-                arm.incrementReleaserPosition();
+                ArmOperation armOperation = new ArmOperation(ArmOperation.Type.Extend, "Extend arm");
+                armOperation.setExtendBy(2.0);
+                queueSecondaryOperation(armOperation);
             }
             if (gamePad2.dpad_down) {
-                arm.decrementReleaserPosition();
+                ArmOperation armOperation = new ArmOperation(ArmOperation.Type.Extend, "Retract arm");
+                armOperation.setExtendBy(-2.0);
+                queueSecondaryOperation(armOperation);
             }
             if (gamePad2.dpad_left) {
-                arm.clawRetainPosition();
-            }
-            if (gamePad2.dpad_right) {
                 arm.clawReleasePosition();
             }
-            if(gamePad2.x) {
-                //reset
+            if (gamePad2.dpad_right) {
+                arm.clawRetainPosition();
             }
-            /**
-             * If the intake is eating and the distance sensor sees an object, stop eating and abstain
-             */
-            if (intake.isEating() && arm.getDistance() < 100) {
-                intake.abstain();
-            }
-            /**
-             * If the intake is expelling and the distance sensor does not see an object, stop expelling and abstain
-             */
-            if (intake.isExpelling() && arm.getDistance() >= 150) {
-                intake.abstain();
+        }
+    }
+
+    private void autoGrabSample(Gamepad gamePad1, ColorBlobLocatorProcessor.Blob blob) {
+        double sampleAngle = SilverTitansVisionPortal.getSampleAngle(blob);
+        if (sampleAngle != -500) {
+            this.arm.setWristPosition(sampleAngle/180.0);
+            double extension = RobotConfig.MINI_ARM_LENGTH * (1-Math.sin(Math.toRadians(sampleAngle)));
+            double strafeLeft = RobotConfig.MINI_ARM_LENGTH * Math.cos(Math.toRadians(sampleAngle));
+            RotatedRect box = blob.getBoxFit();
+            extension += ((box.center.y-360)*3*Field.MM_PER_INCH/720.0);
+            strafeLeft += ((box.center.x-640)*8*Field.MM_PER_INCH/1280.0);
+            Match.log(String.format(Locale.getDefault(),
+                    "Sample angle = %.2f, extension=%.2f, strafe=%.2f", sampleAngle, extension, strafeLeft));
+            ArmOperation extensionOperation = new ArmOperation(ArmOperation.Type.Extend, "Extend arm");
+            extensionOperation.setExtendBy((extension/Field.MM_PER_INCH)-1.5);
+            queueSecondaryOperation(extensionOperation);
+            queuePrimaryOperation(new StrafeLeftForDistanceOperation(strafeLeft, .5, "Strafe to align"));
+            //grab the sample if asked to do so
+            if (Math.abs(gamePad1.left_trigger) > .1) {
+                ArmOperation autoLowerOperation = new ArmOperation(ArmOperation.Type.LowerToSample, "Auto-Lower to get sample");
+                autoLowerOperation.setShoulderSpeed(.5);
+                autoLowerOperation.setSlideSpeed(.5);
+                queueSecondaryOperation(autoLowerOperation);
+                queueSecondaryOperation(new ArmOperation(ArmOperation.Type.Hold, "Grab sample"));
+                queueSecondaryOperation(new ArmOperation(ArmOperation.Type.Hover, "Get to hover"));
             }
         }
     }
 
     public void reset() {
         if (this.driveTrain != null) {
-            this.driveTrain.ensureWheelDirection();
             this.driveTrain.reset();
         }
         if (this.arm != null) {
             this.arm.ensureMotorDirections();
+            this.arm.setWristPosition(RobotConfig.WRIST_STARTING_POSITION);
         }
         initVision();
     }
 
-    public SparkFunOTOS.Pose2D getPose() {
-        return this.otos.getPose();
+    public Pose getPose() {
+        follower.updatePose();
+        return follower.getPose();
     }
 
+    public double getHeading() {
+        return this.imu.getRobotYawPitchRollAngles().getYaw();
+    }
     public DriveTrain getDriveTrain() {
         return this.driveTrain;
     }
@@ -414,23 +460,26 @@ public class Robot {
     public String getArmStatus() {
         return this.arm.getStatus();
     }
-    public String getIntakeStatus() {
-        return this.intake.getStatus();
-    }
     public Arm getArm() {
         return this.arm;
-    }
-
-    public Intake getIntake() {
-        return this.intake;
     }
 
     public SilverTitansVisionPortal getVisionPortal() {
         return visionPortal;
     }
 
-    public LED getLed() {
-        return this.led;
+
+
+    public Follower getFollower() {
+        return follower;
     }
 
+    public boolean isInitialized() {
+        return arm.armCalibrated();
+    }
+
+    public void setPose(Pose startingPose) {
+        this.follower.setPose(startingPose);
+        this.imu.resetYaw();
+    }
 }

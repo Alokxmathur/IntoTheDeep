@@ -112,38 +112,6 @@ public class ObjectDetectionVisionProcessor implements org.firstinspires.ftc.vis
         canvas.drawLine(points[2], points[1], points[2], points[3], linePaint);
     }
 
-    public void decrementMinX() {
-        objectDetector.decrementMinAllowedX();
-    }
-
-    public void incrementMinX() {
-        objectDetector.incrementMinAllowedX();
-    }
-
-    public void decrementMaxX() {
-        objectDetector.decrementMaxAllowedX();
-    }
-
-    public void incrementMaxX() {
-        objectDetector.incrementMaxAllowedX();
-    }
-
-    public void decrementMinY() {
-        objectDetector.decrementMinAllowedY();
-    }
-
-    public void incrementMinY() {
-        objectDetector.incrementMinAllowedY();
-    }
-
-    public void decrementMaxY() {
-        objectDetector.decrementMaxAllowedY();
-    }
-
-    public void incrementMaxY() {
-        objectDetector.incrementMaxAllowedY();
-    }
-
     public double getXPositionOfLargestObject(ObjectDetector.ObjectType objectType) {
         return objectDetector.getXPositionOfLargestObject(objectType);
     }

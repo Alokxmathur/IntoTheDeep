@@ -2,10 +2,14 @@ package org.firstinspires.ftc.teamcode.robot.operations;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.game.Field;
+import org.firstinspires.ftc.teamcode.game.Match;
+import org.firstinspires.ftc.teamcode.robot.RobotConfig;
 import org.firstinspires.ftc.teamcode.robot.components.drivetrain.DriveTrain;
 
 import java.util.Date;
 import java.util.Locale;
+
+import static org.firstinspires.ftc.teamcode.robot.operations.StrafeRightToAprilTagOperation.PROPORTIONAL_FACTOR;
 
 /**
  * Created by Silver Titans on 10/12/17.
@@ -21,10 +25,9 @@ public class StrafeLeftForDistanceWithHeadingOperation extends DriveTrainOperati
      * @param distance - in mm
      * @param heading - in radians
      * @param speed
-     * @param driveTrain
      * @param title
      */
-    public StrafeLeftForDistanceWithHeadingOperation(double distance, double heading, double speed, DriveTrain driveTrain, String title) {
+    public StrafeLeftForDistanceWithHeadingOperation(double distance, double heading, double speed, String title) {
         super();
         this.distance = distance;
         this.heading = heading;
@@ -33,8 +36,9 @@ public class StrafeLeftForDistanceWithHeadingOperation extends DriveTrainOperati
     }
 
     public String toString() {
-        return String.format(Locale.getDefault(), "StrafeLeft: %.2f\"@%.2f --%s",
+        return String.format(Locale.getDefault(), "StrafeLeft: %.2f\",H:%.2f,@%.2f --%s",
                 this.distance/ Field.MM_PER_INCH,
+                Math.toDegrees(this.heading),
                 this.speed,
                 this.title);
     }
@@ -42,33 +46,18 @@ public class StrafeLeftForDistanceWithHeadingOperation extends DriveTrainOperati
     public boolean isComplete() {
         if (driveTrain.driveTrainWithinRange()) {
             driveTrain.stop();
+            Match.log("Ending strafe left with heading at " + Field.poseToString(Match.getInstance().getRobot().getPose()));
             return true;
         }
         else {
-            // adjust relative SPEED based on desiredHeading error.
-            double bearingError = AngleUnit.normalizeDegrees(Math.toDegrees(heading) - Math.toDegrees(driveTrain.getExternalHeading()));
-            double steer = DriveTrain.getSteer(bearingError, DriveTrain.P_DRIVE_COEFFICIENT);
-
-            // if driving in reverse, the motor correction also needs to be reversed
-            if (distance < 0)
-                steer *= -1.0;
-            double speedToUse = new Date().getTime() - this.getStartTime().getTime() < 500 ? 0.1 : speed;
-            double leftSpeed = speedToUse - steer;
-            double rightSpeed = speedToUse + steer;
-
-            // Normalize speeds if either one exceeds +/- 1.0;
-            double max = Math.max(Math.abs(leftSpeed), Math.abs(rightSpeed));
-            if (max > 1.0) {
-                leftSpeed /= max;
-                rightSpeed /= max;
-            }
-
-            driveTrain.setLeftFrontPower(leftSpeed);
-            driveTrain.setLeftRearPower(leftSpeed);
-            driveTrain.setRightFrontPower(rightSpeed);
-            driveTrain.setRightRearPower(rightSpeed);
-            //Match.log(String.format(Locale.getDefault(), "Left speed: %.2f, right: %.2f", leftSpeed, rightSpeed));
-
+            double currentBearing =
+                    Match.getInstance().getRobot().getHeading();
+            //Math.toDegrees(Match.getInstance().getRobot().getPose().getHeading());
+            double bearingError = AngleUnit.normalizeDegrees(Math.toDegrees(this.heading) - currentBearing);
+            this.driveTrain.drive(-Math.atan2(1, 0), Math.hypot(RobotConfig.APRIL_TAG_SPEED*2, 0),
+                    -bearingError*PROPORTIONAL_FACTOR);
+            Match.log("Correcting bearing from " + currentBearing + " to " + Math.toDegrees(this.heading)
+                    + " with rotation of " + -bearingError*PROPORTIONAL_FACTOR);
             return false;
         }
     }
@@ -83,6 +72,7 @@ public class StrafeLeftForDistanceWithHeadingOperation extends DriveTrainOperati
 
     @Override
     public void startOperation() {
+        Match.log("Starting strafe left with heading at " + Field.poseToString(Match.getInstance().getRobot().getPose()));
         driveTrain.handleOperation(this);
     }
 }

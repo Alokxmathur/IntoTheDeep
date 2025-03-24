@@ -33,6 +33,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.RobotLog;
 
+import org.firstinspires.ftc.teamcode.game.Alliance;
 import org.firstinspires.ftc.teamcode.game.Match;
 import org.firstinspires.ftc.teamcode.robot.Robot;
 
@@ -55,7 +56,7 @@ import java.util.Date;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@TeleOp(name = "Aliyah: Driver Controlled", group = "Aliyah")
+@TeleOp(name = "Jank: Driver Controlled", group = "Jank")
 //@Disabled
 public class DriverControlledOperation extends OpMode {
 
@@ -70,7 +71,13 @@ public class DriverControlledOperation extends OpMode {
         this.match = Match.getInstance();
         match.setTeleopStartTime(new Date());
         robot.reset();
-
+        robot.getVisionPortal().enableYellowLocator(true);
+        if (match.getAlliance() == Alliance.Color.RED) {
+            robot.getVisionPortal().enableRedLocator(true);
+        }
+        else {
+            robot.getVisionPortal().enableBlueLocator(true);
+        }
         try {
             robot.setState("Initialized");
             Match.getInstance().updateTelemetry(telemetry,"Press start now");

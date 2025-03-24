@@ -1,6 +1,9 @@
 package org.firstinspires.ftc.teamcode.robot.operations;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.game.Field;
+import org.firstinspires.ftc.teamcode.game.Match;
+import org.firstinspires.ftc.teamcode.robot.components.drivetrain.DriveTrain;
 
 import java.util.Locale;
 
@@ -10,24 +13,32 @@ import java.util.Locale;
 
 public class TurnAntiClockwiseOperation extends TurnClockwiseOperation {
 
-    public TurnAntiClockwiseOperation(double distance, double speed, String title) {
-        super(distance, speed, title);
+    public TurnAntiClockwiseOperation(double bearing, double speed, String title) {
+        super(bearing, speed, title);
     }
 
     public String toString() {
-        return String.format(Locale.getDefault(), "TurnAnti: %.2f(%.2f\")@%.2f --%s",
-                this.distance, this.distance/ Field.MM_PER_INCH, this.speed,
+        return String.format(Locale.getDefault(), "TurnAnti: to %.2f@%.2f --%s",
+                Math.toDegrees(bearing), this.speed,
                 this.title);
     }
 
     @Override
     public void startOperation() {
-        driveTrain.handleOperation(this);
+        Match.getInstance().getRobot().getDriveTrain().drive(0, speed, -1);
     }
-
     @Override
-    public void abortOperation() {
-        driveTrain.stop();
+    public boolean isComplete() {
+        double error = AngleUnit.normalizeDegrees(Math.toDegrees(bearing))
+            - AngleUnit.normalizeDegrees(Math.toDegrees((Match.getInstance().getRobot().getPose().getHeading())));
+        double speedToUse = Math.max(Math.min(Math.abs(error) * COEFFECIENT, speed), .2);
+        DriveTrain driveTrain = Match.getInstance().getRobot().getDriveTrain();
+        driveTrain.setLeftFrontPower(-speedToUse);
+        driveTrain.setLeftBackPower(-speedToUse);
+        driveTrain.setRightFrontPower(speedToUse);
+        driveTrain.setRightBackPower(speedToUse);
+
+        return Math.abs(error)  < 4;
     }
 }
 
