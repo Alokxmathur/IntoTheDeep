@@ -1,11 +1,10 @@
 package org.firstinspires.ftc.teamcode.game;
 
 import org.firstinspires.ftc.teamcode.opmodes.autonomous.AutonomousHelper;
-import org.firstinspires.ftc.teamcode.opmodes.autonomous.AutonomousV2;
+import org.firstinspires.ftc.teamcode.opmodes.autonomous.Autonomous;
 import org.firstinspires.ftc.teamcode.pedroPathing.localization.Pose;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.BezierCurve;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.BezierLine;
-import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.Path;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.PathBuilder;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.PathChain;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.Point;
@@ -41,65 +40,42 @@ public class Field {
                     // Line 1 - get to top of sample 1
                     new BezierCurve(
                             new Point(
-                                    AutonomousHelper.redLeftStartingPose.getX() - (AutonomousV2.DISTANCE_TO_SUBMERSIBLE/Field.MM_PER_INCH),
+                                    AutonomousHelper.redLeftStartingPose.getX() - (Autonomous.DISTANCE_TO_SUBMERSIBLE/Field.MM_PER_INCH),
                                     AutonomousHelper.redRightStartingPose.getY(), Point.CARTESIAN),
                             new Point(140, 130, Point.CARTESIAN),
                             new Point(80.814, 93.477, Point.CARTESIAN),
-                            new Point(80, 113, Point.CARTESIAN)
+                            new Point(80, 115, Point.CARTESIAN)
                     )
             )
             .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
             .addPath(
                     // Line 2 - push sample 1
                     new BezierLine(
-                            new Point(80, 113, Point.CARTESIAN),
-                            new Point(115, 113, Point.CARTESIAN)
+                            new Point(80, 115, Point.CARTESIAN),
+                            new Point(114, 115, Point.CARTESIAN)
                     )
             )
             .setTangentHeadingInterpolation()
             .addPath(
                     // Line 3 - return from pushing first sample
                     new BezierCurve(
-                            new Point(115, 113, Point.CARTESIAN),
+                            new Point(114, 115, Point.CARTESIAN),
                             new Point(73.030, 120, Point.CARTESIAN),
-                            new Point(80, 122, Point.CARTESIAN)
+                            new Point(80, 124, Point.CARTESIAN)
                     )
             )
             .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
-            .setPathEndHeadingConstraint(Math.toRadians(10))
-            .setPathEndTValueConstraint(.8)
-            .setPathEndTimeoutConstraint(500)
-            /*
             .addPath(
-                    // Line 4
+                    // Line 2 - push sample 2
                     new BezierLine(
-                            new Point(90, 118, Point.CARTESIAN),
-                            new Point(120, 118, Point.CARTESIAN)
+                            new Point(80, 124, Point.CARTESIAN),
+                            new Point(116, 124, Point.CARTESIAN)
                     )
             )
-            .setTangentHeadingInterpolation()
-            .addPath(
-s                    // Line 5
-                    new BezierCurve(
-                            new Point(120, 118, Point.CARTESIAN),
-                            new Point(95.573, 125.267, Point.CARTESIAN),
-                            new Point(121.119, 87.422, Point.CARTESIAN),
-                            new Point(124, 77, Point.CARTESIAN)
-                    )
-            )
-            .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(63))
-
-            .addPath(
-                    // Line 6
-                    new BezierCurve(
-                            new Point(128.270, 107.860, Point.CARTESIAN),
-                            new Point(136.257, 76.636, Point.CARTESIAN),
-                            new Point(108.047, 67.225, Point.CARTESIAN)
-                    )
-            )
-            .setLinearHeadingInterpolation(Math.toRadians(45), Math.toRadians(0))
-
-             */
+            .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
+            .setPathEndHeadingConstraint(Math.toRadians(5))
+            .setPathEndTValueConstraint(.8)
+            .setPathEndTimeoutConstraint(100)
             .build();
 
             public static String poseToString(Pose pose) {

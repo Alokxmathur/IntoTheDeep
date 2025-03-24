@@ -22,7 +22,7 @@ public class Arm {
     public static int encoderTicksPerRevolutionOfSlide = 560;
     //height of the triangle describing our arm in inches
     public static double heightOfArmAtHover = 6.0;
-    public static double hypotenuseOfArmAtHover = 17.1;
+    public static double hypotenuseOfArmAtHover = 17.5;
     public static double thetaOfArmAtHover = Math.asin(heightOfArmAtHover / hypotenuseOfArmAtHover);
 
     public static double baseOfArmAtHover =
@@ -42,7 +42,7 @@ public class Arm {
     public static final int encoderTicksRequiredPerRadianOfShoulder =
             (int) (encodersTicksRequiredPerRevolutionOfShoulder / Math.toRadians(360));
 
-    boolean shoulderUpperLimitCalibrated,
+    boolean elbowRetracted, slideRetracted, shoulderUpperLimitCalibrated,
             shoulderLowerLimitCalibrated,
             shoulderLowered, shoulderUnlowered, shoulderRaised, shoulderUnraised;
     Date calibrationStarted;
@@ -67,7 +67,7 @@ public class Arm {
 
     DcMotorEx slide, shoulder, elbow;
 
-    Servo claw;
+    Servo wrist, claw;
 
     TouchSensor horizontalTouchSensor, verticalTouchSensor;  // Touch sensors
 
@@ -99,6 +99,9 @@ public class Arm {
         this.claw = hardwareMap.get(Servo.class, RobotConfig.CLAW);
         this.claw.setPosition(RobotConfig.CLAW_HOLD_POSITION);
 
+        this.wrist = hardwareMap.get(Servo.class, RobotConfig.WRIST);
+        this.wrist.setPosition(RobotConfig.WRIST_STARTING_POSITION);
+
         this.horizontalTouchSensor = hardwareMap.get(TouchSensor.class, "hTouchSensor");
         this.verticalTouchSensor = hardwareMap.get(TouchSensor.class, "vTouchSensor");
 
@@ -109,11 +112,33 @@ public class Arm {
     public boolean armCalibrated() {
         if (calibrationStarted == null) {
             calibrationStarted = new Date();
+            /*
+            //start tucking in the slide and the elbow
+            slide.setPower(-.2);
+            elbow.setPower(-.2);
+
+             */
             return false;
         }
         else if (new Date().getTime() - calibrationStarted.getTime() < 2000) {
+            //allow elbow and slide to retract
             return false;
         }
+        /*
+        else if (!elbowRetracted) {
+            //reset elbow position to 0
+            elbowRetracted = true;
+            elbow.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            retainElbow();
+        }
+        else if (!slideRetracted) {
+            //reset slide position to 0
+            slideRetracted = true;
+            slide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            retainSlide();
+        }
+
+         */
         else if (!shoulderUpperLimitCalibrated) {
             if (!shoulderRaised) {
                 //if the vertical limit switch was not pressed, raise shoulder
@@ -199,14 +224,6 @@ public class Arm {
         retainShoulder();
     }
 
-    public void raiseShoulderIncrementally() {
-        setShoulderPosition(shoulder.getCurrentPosition() - 5);
-    }
-
-    public void lowerShoulderIncrementally() {
-        setShoulderPosition(shoulder.getCurrentPosition() + 5);
-    }
-
     public void setClawPosition(double clawPosition) {
         this.claw.setPosition(clawPosition);
     }
@@ -214,22 +231,18 @@ public class Arm {
     public void stop() {
     }
 
-    private void setPositions(ArmPosition armPosition) {
-        setSlidePosition(armPosition.getSlide());
-        setShoulderPosition(armPosition.getShoulder());
-        setElbowPosition(armPosition.getElbow());
-        claw.setPosition(armPosition.getClaw());
+    public void setSlidePosition(int position) {
+        setSlidePosition(position, RobotConfig.MAX_SLIDE_POWER);
     }
-
     /**
      * Set the slide position
      *
      * @param position
      */
-    public void setSlidePosition(int position) {
-        this.slide.setTargetPosition(Math.max(position, 0));
+    public void setSlidePosition(int position, double speed) {
+        this.slide.setTargetPosition(Math.min(Math.max(position, 0), 2500));
         this.slide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        this.slide.setPower(RobotConfig.MAX_SLIDE_POWER);
+        this.slide.setPower(speed);
     }
 
     /**
@@ -253,16 +266,19 @@ public class Arm {
         slideRetained = false;
     }
 
+    public void setShoulderPosition(int position) {
+        setShoulderPosition(position, RobotConfig.MAX_SHOULDER_POWER);
+    }
     /**
      * Set the shoulder motor position
      *
      * @param position
      */
-    public void setShoulderPosition(int position) {
+    public void setShoulderPosition(int position, double speed) {
         //we make sure we don't go beyond the upper limit of the shoulder position
         this.shoulder.setTargetPosition(Range.clip(position,0, shoulderUpperLimit));
         this.shoulder.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        this.shoulder.setPower(RobotConfig.MAX_SHOULDER_POWER);
+        this.shoulder.setPower(speed);
     }
 
     /**
@@ -354,13 +370,12 @@ public class Arm {
      */
     public String getStatus() {
         return String.format(Locale.getDefault(),
-                "Ext:%.2f,Lowering:%.2f,Slide:%d->%d@%.2f, Shld:%d->%d@%.2fMax(%d), Elb:%d->%d@%.2f, Clw:%.2f, TH:%s, TV:%s",
+                "Ext:%.2f,Lowering:%.2f,Slide:%d->%d@%.2f, Shld:%d->%d@%.2fMax(%d), Elb:%d->%d@%.2f, Clw:%.3f, Wrst:%.3f",
                 currentExtension, currentLowering,
                 slide.getCurrentPosition(), slide.getTargetPosition(), slide.getPower(),
                 shoulder.getCurrentPosition(), shoulder.getTargetPosition(), shoulder.getPower(), this.shoulderUpperLimit,
                 elbow.getCurrentPosition(), elbow.getTargetPosition(), elbow.getPower(),
-                claw.getPosition(), horizontalTouchSensor.isPressed() ? "Pressed" : "Not pressed",
-                horizontalTouchSensor.isPressed() ? "Pressed" : "Not pressed");
+                claw.getPosition(), wrist.getPosition());
     }
 
     public void clawReleasePosition() {
@@ -378,6 +393,18 @@ public class Arm {
     public void decrementReleaserPosition() {
         this.claw.setPosition(this.claw.getPosition() - RobotConfig.SERVO_INCREMENT);
     }
+
+    public void setWristPosition(double position) {
+        this.wrist.setPosition(position);
+    }
+    public void incrementWristPosition() {
+        this.wrist.setPosition(this.wrist.getPosition() + RobotConfig.SERVO_INCREMENT*6);
+    }
+
+    public void decrementWristPosition() {
+        this.wrist.setPosition(this.wrist.getPosition() - RobotConfig.SERVO_INCREMENT*6);
+    }
+
     public double thetaAtHover() {
         return getTheta(0, 0);
     }
@@ -434,4 +461,12 @@ public class Arm {
     public int getSlideTargetPosition() {
         return this.slide.getTargetPosition();
     }
+
+    public int getShoulderCurrentPosition() {
+        return this.shoulder.getCurrentPosition();
+    }
+    public int getShoulderTargetPosition() {
+        return this.shoulder.getTargetPosition();
+    }
+
 }

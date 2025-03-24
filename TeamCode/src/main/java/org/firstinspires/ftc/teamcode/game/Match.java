@@ -112,24 +112,22 @@ public class Match {
             telemetry.addData("Delayed Start", getDelayedStart() + "milliseconds");
             Pose pose = robot.getPose();
             telemetry.addData("Position",
-                    String.format(Locale.getDefault(), "X:%.2f,Y:%.2f:H:%.2f",
+                    "X:%.2f,Y:%.2f:H:%.2f",
                             pose.getX(),
                             pose.getY(),
-                            Math.toDegrees(pose.getHeading())));
+                            Math.toDegrees(pose.getHeading()));
+            telemetry.addData("IMU Heading", "%.2f", robot.getHeading());
             telemetry.addData("Arm", robot.getArmStatus());
 
             telemetry.addData("Drive", robot.getDriveTrain().getStatus());
 
-            /*
-            telemetry.addData("Camera", robot.getVisionPortal().getStatus());
-            */
             NormalizedRGBA colors = robot.getColors();
             telemetry.addLine()
-                    .addData("Red", "%.3f", colors.red)
+                    .addData("ColorSensor: Red", "%.3f", colors.red)
                     .addData("Green", "%.3f", colors.green)
                     .addData("Blue", "%.3f", colors.blue);
+            telemetry.addData("Vision", robot.getVisionPortal().getStatus());
             robot.getVisionPortal().telemetryAprilTag(telemetry);
-
             //updateDashBoard(status);
         }
         else {

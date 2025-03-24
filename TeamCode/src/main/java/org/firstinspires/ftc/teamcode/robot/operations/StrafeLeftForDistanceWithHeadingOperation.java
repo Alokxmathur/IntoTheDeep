@@ -3,10 +3,13 @@ package org.firstinspires.ftc.teamcode.robot.operations;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.game.Field;
 import org.firstinspires.ftc.teamcode.game.Match;
+import org.firstinspires.ftc.teamcode.robot.RobotConfig;
 import org.firstinspires.ftc.teamcode.robot.components.drivetrain.DriveTrain;
 
 import java.util.Date;
 import java.util.Locale;
+
+import static org.firstinspires.ftc.teamcode.robot.operations.StrafeRightToAprilTagOperation.PROPORTIONAL_FACTOR;
 
 /**
  * Created by Silver Titans on 10/12/17.
@@ -48,34 +51,13 @@ public class StrafeLeftForDistanceWithHeadingOperation extends DriveTrainOperati
         }
         else {
             double currentBearing =
-                    Math.toDegrees(Match.getInstance().getRobot().getPose().getHeading());
-            // adjust relative SPEED based on desiredHeading error.
-            double bearingError = AngleUnit.normalizeDegrees(Math.toDegrees(heading)
-                    - currentBearing);
-            double steer = DriveTrain.getSteer(bearingError, DriveTrain.P_DRIVE_COEFFICIENT);
-
-            // if driving in reverse, the motor correction also needs to be reversed
-            if (distance < 0)
-                steer *= -1.0;
-            double speedToUse = new Date().getTime() - this.getStartTime().getTime() < 500 ? 0.1 : speed;
-            double leftSpeed = speedToUse - steer;
-            double rightSpeed = speedToUse + steer;
-
-            // Normalize speeds if either one exceeds +/- 1.0;
-            double max = Math.max(Math.abs(leftSpeed), Math.abs(rightSpeed));
-            if (max > 1.0) {
-                leftSpeed /= max;
-                rightSpeed /= max;
-            }
-            Match.log(String.format(Locale.getDefault(), "%.2f vs %.2f, Bearing error: %.2f, Setting power LF:%.2f,LR:%.2f,RF:%.2f,RR%.2f",
-                    Math.toDegrees(heading), currentBearing, bearingError, leftSpeed, leftSpeed, rightSpeed, rightSpeed));
-
-            driveTrain.setLeftFrontPower(leftSpeed);
-            driveTrain.setLeftBackPower(leftSpeed);
-            driveTrain.setRightFrontPower(rightSpeed);
-            driveTrain.setRightBackPower(rightSpeed);
-            //Match.log(String.format(Locale.getDefault(), "Left speed: %.2f, right: %.2f", leftSpeed, rightSpeed));
-
+                    Match.getInstance().getRobot().getHeading();
+            //Math.toDegrees(Match.getInstance().getRobot().getPose().getHeading());
+            double bearingError = AngleUnit.normalizeDegrees(Math.toDegrees(this.heading) - currentBearing);
+            this.driveTrain.drive(-Math.atan2(1, 0), Math.hypot(RobotConfig.APRIL_TAG_SPEED*2, 0),
+                    -bearingError*PROPORTIONAL_FACTOR);
+            Match.log("Correcting bearing from " + currentBearing + " to " + Math.toDegrees(this.heading)
+                    + " with rotation of " + -bearingError*PROPORTIONAL_FACTOR);
             return false;
         }
     }

@@ -190,7 +190,7 @@ public class DriveTrain extends SparkFunOTOSDrive {
 
     private boolean withinRange(DcMotor... motors) {
         for (DcMotor motor: motors) {
-            Match.log("Target=" + motor.getTargetPosition() + ", current=" + motor.getCurrentPosition());
+            //Match.log("Target=" + motor.getTargetPosition() + ", current=" + motor.getCurrentPosition());
             if (Math.abs(motor.getTargetPosition() - motor.getCurrentPosition()) <= WITHIN_RANGE) {
                 return true;
             }

@@ -77,7 +77,7 @@ public class DriveToAprilTag extends Operation {
             We consider we have arrived if we are within 1 inch of the desired distance,
             and within 2 degrees of facing the aprilTag
              */
-            if (Math.abs(rangeError) < 1 && Math.abs(headingError) < 1) {
+            if (Math.abs(rangeError) < 1 && Math.abs(headingError) < 3) {
                 arrived = true;
             }
 

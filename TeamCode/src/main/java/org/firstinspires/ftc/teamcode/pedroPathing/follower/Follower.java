@@ -238,6 +238,7 @@ public class Follower {
      */
     public void setPose(Pose pose) {
         poseUpdater.setPose(pose);
+        this.resetIMU();
     }
 
     /**

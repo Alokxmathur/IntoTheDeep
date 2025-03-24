@@ -108,9 +108,9 @@ public abstract class AutonomousHelper extends OpMode {
      */
     @Override
     public void init_loop() {
-        this.robot.getFollower().setPose(getStartingPose(Match.getInstance().getAlliance(),
-                Match.getInstance().getStartingPosition()));
-
+        Field.StartingPosition startingPosition = Match.getInstance().getStartingPosition();
+        this.robot.setPose(getStartingPose(Match.getInstance().getAlliance(),
+                startingPosition));
         if (match.getAlliance() != Alliance.Color.NotSelected) {
             if (!robot.isInitialized()) {
                 telemetry.addData("State", "Robot is initializing");

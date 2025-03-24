@@ -50,7 +50,7 @@ public class FollowPathChain extends Operation {
             Match.log("Desired point " + Field.pointToString(endPoint));
         }
         else {
-            Match.log("Continuing " + title + " at path " + currentPathNumber + " at " + Field.poseToString(currentPose));
+            //Match.log("Continuing " + title + " at path " + currentPathNumber + " at " + Field.poseToString(currentPose));
         }
         return complete;
     }

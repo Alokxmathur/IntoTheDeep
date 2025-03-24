@@ -113,7 +113,7 @@ public class ConceptVisionColorLocator extends LinearOpMode
                 .setTargetColorRange(ColorRange.BLUE)         // use a predefined color match
                 .setContourMode(ColorBlobLocatorProcessor.ContourMode.EXTERNAL_ONLY)    // exclude blobs inside blobs
                 .setRoi(ImageRegion.asUnityCenterCoordinates(-0.5, 0.5, 0.5, -0.5))  // search central 1/4 of camera view
-                .setDrawContours(true)                        // Show contours on the Stream Preview
+                .setDrawContours(false)                        // Show contours on the Stream Preview
                 .setBlurSize(5)                               // Smooth the transitions between different colors in image
                 .setBoxFitColor(Color.RED)
                 .build();
@@ -121,7 +121,7 @@ public class ConceptVisionColorLocator extends LinearOpMode
                 .setTargetColorRange(ColorRange.RED)         // use a predefined color match
                 .setContourMode(ColorBlobLocatorProcessor.ContourMode.EXTERNAL_ONLY)    // exclude blobs inside blobs
                 .setRoi(ImageRegion.asUnityCenterCoordinates(-0.5, 0.5, 0.5, -0.5))  // search central 1/4 of camera view
-                .setDrawContours(true)                        // Show contours on the Stream Preview
+                .setDrawContours(false)                        // Show contours on the Stream Preview
                 .setBlurSize(5)                               // Smooth the transitions between different colors in image
                 .setBoxFitColor(Color.BLUE)
                 .build();
@@ -130,9 +130,9 @@ public class ConceptVisionColorLocator extends LinearOpMode
                 .setTargetColorRange(ColorRange.YELLOW)         // use a predefined color match
                 .setContourMode(ColorBlobLocatorProcessor.ContourMode.EXTERNAL_ONLY)    // exclude blobs inside blobs
                 .setRoi(ImageRegion.asUnityCenterCoordinates(-0.5, 0.5, 0.5, -0.5))  // search central 1/4 of camera view
-                .setDrawContours(true)                        // Show contours on the Stream Preview
+                .setDrawContours(false)                        // Show contours on the Stream Preview
                 .setBlurSize(5)                               // Smooth the transitions between different colors in image
-                .setBoxFitColor(Color.WHITE)
+                .setBoxFitColor(Color.GREEN)
                 .build();
         /*
          * Build a vision portal to run the Color Locator process.
@@ -150,8 +150,7 @@ public class ConceptVisionColorLocator extends LinearOpMode
                 .addProcessor(blueColorLocator)
                 .addProcessor(redColorLocator)
                 .addProcessor(yellowColorLocator)
-                .setCameraResolution(new Size(320, 240))
-                .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
+                .setCamera(hardwareMap.get(WebcamName.class, "Webcam 2"))
                 .build();
 
         telemetry.setMsTransmissionInterval(50);   // Speed up telemetry updates, Just use for debugging.
@@ -187,7 +186,7 @@ public class ConceptVisionColorLocator extends LinearOpMode
                  *   A blob's Aspect ratio is the ratio of boxFit long side to short side.
                  *   A perfect Square has an aspect ratio of 1.  All others are > 1
                  */
-                ColorBlobLocatorProcessor.Util.filterByArea(100, 20000, blobs);  // filter out very small blobs.
+                ColorBlobLocatorProcessor.Util.filterByArea(10000, 2000000, blobs);  // filter out very small blobs.
                 ColorBlobLocatorProcessor.Util.sortByArea(SortOrder.DESCENDING, blobs);
                 /*
                  * The list of Blobs can be sorted using the same Blob attributes as listed above.

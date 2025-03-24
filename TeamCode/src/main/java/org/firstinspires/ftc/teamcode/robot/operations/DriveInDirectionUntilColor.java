@@ -43,7 +43,7 @@ public class DriveInDirectionUntilColor extends DriveInDirectionOperation {
             foundColor = colors.red > .07;
         }
         else {
-            foundColor = colors.blue > .06;
+            foundColor = colors.blue > .07;
         }
         //we are done if we find the color or we have traveled the max distance
         //whichever happens first
